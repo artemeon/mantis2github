@@ -44,16 +44,18 @@ class MantisConnector
 
     public function patchUpstreamField(MantisIssue $issue)
     {
-        $this->getDefaultClient()->patch($this->config->getMantisUrl() . '/api/rest/issues/' . $issue->getId(), [
-            'body' => json_encode([
-                                      'custom_fields' => [
+        $jsonEncode = json_encode([
+                                      'custom_fields' => [[
                                           'field' => [
                                               'id' => $issue->getUpstreamTicketFieldId(),
                                               'name' => $issue->getUpstreamTicketFieldName()
                                           ],
                                           'value' => $issue->getUpstreamTicket()
-                                      ]
-                                  ])
+                                      ]]
+                                  ]);
+
+        $response = $this->getDefaultClient()->patch($this->config->getMantisUrl() . '/api/rest/issues/' . $issue->getId(), [
+            'body' => $jsonEncode
         ]);
     }
 
@@ -71,7 +73,10 @@ class MantisConnector
     private function getDefaultClient(): Client
     {
         return new Client([
-          'headers' => ['Authorization' => $this->config->getMantisToken()]
+          'headers' => [
+              'Authorization' => $this->config->getMantisToken(),
+              'Content-Type' => 'application/json'
+          ]
       ]);
     }
 

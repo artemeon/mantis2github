@@ -35,7 +35,7 @@ class GithubConnector
             $result['number'],
             $result['title'],
             $result['body'],
-            'https://github.com/ ' . $this->config->getGithubRepo() . '/issues/' . $result['number']
+            'https://github.com/' . $this->config->getGithubRepo() . '/issues/' . $result['number']
         );
 
         return $issue;
@@ -55,7 +55,7 @@ class GithubConnector
             $result['number'],
             $result['title'],
             $result['body'],
-            'https://github.com/ ' . $this->config->getGithubRepo() . '/issues/' . $result['number']
+            'https://github.com/' . $this->config->getGithubRepo() . '/issues/' . $result['number']
         );
 
         return $issue;
