@@ -10,6 +10,8 @@ Creates cross-references, so links the github issue to mantis and vice versa.
     composer install
     php cli.php
 
+Copy the `config.sample.yaml` to `config.yaml` and change your props as api tokens.
+
 ## CLI Commands
 
     mantis2github  creates a github issue from a mantis issue
