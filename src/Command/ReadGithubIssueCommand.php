@@ -34,7 +34,7 @@ class ReadGithubIssueCommand extends Command
     protected function configure()
     {
         $this->setName('github-read');
-        $this->setDescription('read details of a mantis issue');
+        $this->setDescription('read details of a github issue');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
