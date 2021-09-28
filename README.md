@@ -15,5 +15,5 @@ Copy the `config.sample.yaml` to `config.yaml` and change your props as api toke
 ## CLI Commands
 
     mantis2github  creates a github issue from a mantis issue
-    github-read    read details of a mantis issue
+    github-read    read details of a github issue
     mantis-read    read details of a mantis issue
