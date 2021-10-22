@@ -15,7 +15,7 @@ Copy the `config.sample.yaml` to `config.yaml` and change your props as api toke
 ###Github
 - Go to https://github.com/settings/tokens
 - Click **Generate new token**
-- Enter Note & check repo in **select scoptes**
+- Enter Note & check repo in **select scopes**
 
 Enter credentials into `config.yaml`
 
