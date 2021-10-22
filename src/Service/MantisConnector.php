@@ -25,7 +25,7 @@ class MantisConnector
 
     public function readIssue(int $number): MantisIssue
     {
-        $response = $this->getDefaultClient()->get($this->config->getMantisUrl() . '/api/rest/issues/' . $number);
+        $response = $this->getDefaultClient()->get(rtrim($this->config->getMantisUrl(),'/') . '/api/rest/issues/' . $number);
         $result = json_decode($response->getBody(), true);
 
         $issue = new MantisIssue(
