@@ -40,7 +40,7 @@ class CreateGithubIssueFromMantisIssue extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $output->writeln('Mantis 2 Github Sync, creates a new Github isse');
+        $output->writeln('Mantis 2 Github Sync, creates a new Github issue');
         $question = new Question('Mantis ID:');
         /** @var QuestionHelper $helper */
         $helper = $this->getHelper('question');
@@ -52,6 +52,11 @@ class CreateGithubIssueFromMantisIssue extends Command
 
         $mantisIssue = $this->mantisConnector->readIssue((int)$id);
         $output->writeln('Read mantis issue with ID ' . $mantisIssue->getId());
+
+        if (!empty($mantisIssue->getUpstreamTicket())) {
+            $output->writeln('Githubticket already exists: ' . $mantisIssue->getUpstreamTicket());
+            return 1;
+        }
 
         $newGithubIssue = GithubIssue::fromMantisIssue($mantisIssue);
 
