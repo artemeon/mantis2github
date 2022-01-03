@@ -24,7 +24,6 @@ Enter credentials into `config.yaml`
     composer install
     php cli.php
 
-
 ## CLI Commands
 
     mantis2github  creates a github issue from a mantis issue
