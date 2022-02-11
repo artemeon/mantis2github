@@ -5,14 +5,14 @@
 A small CLI tool used to create a GitHub Isse out of a mantis issue.
 Creates cross-references, so links the github issue to mantis and vice versa.
 
-##Prerequirement
+## Prerequirement
 Copy the `config.sample.yaml` to `config.yaml` and change your props as api tokens.
 
-###Mantis:
+### Mantis:
 - Go to User Settings
 - Go to **Api-Token** tab
 
-###Github
+### Github
 - Go to https://github.com/settings/tokens
 - Click **Generate new token**
 - Enter Note & check repo in **select scopes**
