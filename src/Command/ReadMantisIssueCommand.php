@@ -14,6 +14,7 @@ use Artemeon\M2G\Service\GithubConnector;
 use Artemeon\M2G\Service\MantisConnector;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
+use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
@@ -38,7 +39,7 @@ class ReadMantisIssueCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $output->writeln('Mantis Details');
-        $question = new Question('Mantis ID:');
+        $question = new Question('Mantis ID: ');
         /** @var QuestionHelper $helper */
         $helper = $this->getHelper('question');
         $id = $helper->ask($input, $output, $question);
@@ -49,11 +50,11 @@ class ReadMantisIssueCommand extends Command
 
         $issue = $this->mantisConnector->readIssue((int)$id);
 
-        $output->writeln('------------------------------------------');
-        $output->writeln('ID:              ' . $issue->getId());
-        $output->writeln('Summary:         ' . $issue->getSummary());
-        $output->writeln('Upstream Ticket: ' . $issue->getUpstreamTicket());
-        $output->writeln('------------------------------------------');
+        $table = new Table($output);
+        $table->addRow(['ID', $issue->getId()]);
+        $table->addRow(['Summary', $issue->getSummary()]);
+        $table->addRow(['GitHub Issue URL', $issue->getUpstreamTicket()]);
+        $table->render();
 
         return 0;
     }

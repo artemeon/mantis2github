@@ -23,10 +23,14 @@ class MantisConnector
         $this->config = $config;
     }
 
-    public function readIssue(int $number): MantisIssue
+    public function readIssue(int $number): ?MantisIssue
     {
-        $response = $this->getDefaultClient()->get(rtrim($this->config->getMantisUrl(),'/') . '/api/rest/issues/' . $number);
-        $result = json_decode($response->getBody(), true);
+        try {
+            $response = $this->getDefaultClient()->get(rtrim($this->config->getMantisUrl(),'/') . '/api/rest/issues/' . $number);
+            $result = json_decode($response->getBody(), true);
+        } catch (\Exception $e) {
+            return null;
+        }
 
         $issue = new MantisIssue(
             $result['issues'][0]['id'],

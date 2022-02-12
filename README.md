@@ -15,17 +15,24 @@ Copy the `config.sample.yaml` to `config.yaml` and change your props as api toke
 ### Github
 - Go to https://github.com/settings/tokens
 - Click **Generate new token**
-- Enter Note & check repo in **select scopes**
+- Enter Note & check `repo` in **select scopes**
 
 Enter credentials into `config.yaml`
 
 ## Installation
 
-    composer install
-    php cli.php
+```shell
+composer install
+```
 
-## CLI Commands
+## Usage
 
-    mantis2github  creates a github issue from a mantis issue
+```shell
+php mantis2github [command]
+```
+
+### Available Commands
+
+    sync           creates a github issue from a mantis issue
     github-read    read details of a github issue
     mantis-read    read details of a mantis issue
