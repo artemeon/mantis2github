@@ -33,6 +33,8 @@ php mantis2github [command]
 
 ### Available Commands
 
-    sync           creates a github issue from a mantis issue
-    github-read    read details of a github issue
-    mantis-read    read details of a mantis issue
+| Command       | Description                               |
+|---------------|-------------------------------------------|
+| `sync`        | Create a GitHub Issue from a Mantis Issue |
+| `github-read` | Read details of a GitHub Issue            |
+| `mantis-read` | Read details of a Mantis Issue            |
