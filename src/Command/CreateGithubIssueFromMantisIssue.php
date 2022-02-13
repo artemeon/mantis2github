@@ -15,6 +15,7 @@ use Artemeon\M2G\Service\GithubConnector;
 use Artemeon\M2G\Service\MantisConnector;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
+use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
@@ -34,42 +35,69 @@ class CreateGithubIssueFromMantisIssue extends Command
 
     protected function configure()
     {
-        $this->setName('mantis2github');
+        $this->setName('sync');
         $this->setDescription('creates a github issue from a mantis issue');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $output->writeln('Mantis 2 Github Sync, creates a new Github issue');
-        $question = new Question('Mantis ID:');
+        $question = new Question('Mantis ID: ');
         /** @var QuestionHelper $helper */
         $helper = $this->getHelper('question');
         $id = $helper->ask($input, $output, $question);
 
         if (!is_numeric($id)) {
-            $output->writeln('<error>Provide issue id</error>');
-        }
+            $output->writeln('<error>Please provide a valid issue id.</error>');
 
-        $mantisIssue = $this->mantisConnector->readIssue((int)$id);
-        $output->writeln('Read mantis issue with ID ' . $mantisIssue->getId());
-
-        if (!empty($mantisIssue->getUpstreamTicket())) {
-            $output->writeln('Githubticket already exists: ' . $mantisIssue->getUpstreamTicket());
             return 1;
         }
+
+        $output->writeln("Reading mantis issue with ID $id ...");
+
+        $mantisIssue = $this->mantisConnector->readIssue((int)$id);
+
+        if ($mantisIssue === null) {
+            $output->writeln("<error>No issue found with id $id.</error>");
+
+            return 1;
+        }
+
+        $table = new Table($output);
+        $table->setHeaders(['ID', 'Summary']);
+        $table->addRow([$mantisIssue->getId(), $mantisIssue->getSummary()]);
+        $table->render();
+
+        if (!empty($mantisIssue->getUpstreamTicket())) {
+            $output->writeln("<comment>GitHub issue already exists: {$mantisIssue->getUpstreamTicket()}</comment>");
+
+            return 1;
+        }
+
+        $confirmationQuestion = new Question('Do you want to create a new issue on GitHub? [Y/n] ', 'n');
+
+        $confirmation = $helper->ask($input, $output, $confirmationQuestion);
+
+        if ($confirmation !== 'Y') {
+            $output->writeln('<error>Aborted</error>');
+
+            return 1;
+        }
+
+        $output->writeln('<info>Creating new GitHub issue ...</info>');
 
         $newGithubIssue = GithubIssue::fromMantisIssue($mantisIssue);
 
         $newGithubIssue = $this->githubConnector->createIssue($newGithubIssue);
-        $output->writeln('Created github issue with ID ' . $newGithubIssue->getNumber());
+        $output->writeln("<info>Successfully created GitHub issue #{$newGithubIssue->getId()}.</info>");
+
+        $output->writeln('Updating upstream ticket at mantis issue ...');
 
         $mantisIssue->setUpstreamTicket($newGithubIssue->getIssueUrl());
         $this->mantisConnector->patchUpstreamField($mantisIssue);
-        $output->writeln('Updated mantis upstream issue url to ' . $mantisIssue->getUpstreamTicket());
 
+        $output->writeln("<info>Successfully updated Mantis upstream issue url to {$mantisIssue->getUpstreamTicket()}.</info>");
 
         return 0;
     }
-
-
 }

@@ -13,6 +13,7 @@ namespace Artemeon\M2G\Command;
 use Artemeon\M2G\Service\GithubConnector;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
+use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
@@ -40,7 +41,7 @@ class ReadGithubIssueCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $output->writeln('Github Details');
-        $question = new Question('Github Issue ID:');
+        $question = new Question('Github Issue ID: ');
         /** @var QuestionHelper $helper */
         $helper = $this->getHelper('question');
         $id = $helper->ask($input, $output, $question);
@@ -51,11 +52,12 @@ class ReadGithubIssueCommand extends Command
 
         $issue = $this->githubConnector->readIssue((int)$id);
 
-        $output->writeln('------------------------------------------');
-        $output->writeln('ID:              ' . $issue->getId());
-        $output->writeln('Number:          ' . $issue->getNumber());
-        $output->writeln('Summary:         ' . $issue->getTitle());
-        $output->writeln('------------------------------------------');
+        $table = new Table($output);
+        $table->addRow(['ID', $issue->getId()]);
+        $table->addRow(['Number', '#' . $issue->getNumber()]);
+        $table->addRow(['Title', $issue->getTitle()]);
+        $table->addRow(['URL', $issue->getIssueUrl()]);
+        $table->render();
 
         return 0;
     }

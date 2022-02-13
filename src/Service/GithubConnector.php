@@ -30,15 +30,13 @@ class GithubConnector
 
         $result = json_decode($response->getBody(), true);
 
-        $issue = new GithubIssue(
+        return new GithubIssue(
             $result['id'],
             $result['number'],
             $result['title'],
-            $result['body'],
+            $result['body'] ?? '',
             'https://github.com/' . $this->config->getGithubRepo() . '/issues/' . $result['number']
         );
-
-        return $issue;
     }
 
 
