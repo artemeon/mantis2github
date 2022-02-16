@@ -1,12 +1,23 @@
-
-
 # Mantis 2 Github Connector
 
 A small CLI tool used to create a GitHub Isse out of a mantis issue.
 Creates cross-references, so links the github issue to mantis and vice versa.
 
-## Prerequirement
-Copy the `config.sample.yaml` to `config.yaml` and change your props as api tokens.
+## Installation
+
+```shell
+composer global require artemeon/mantis2github
+```
+
+## (Initial) Set up
+
+When you first installed the package, call the `setup` command. You only need to do this once.
+
+```shell
+mantis2github setup
+```
+
+You will be directed through the installation process.
 
 ### Mantis:
 - Go to User Settings
@@ -17,18 +28,10 @@ Copy the `config.sample.yaml` to `config.yaml` and change your props as api toke
 - Click **Generate new token**
 - Enter Note & check `repo` in **select scopes**
 
-Enter credentials into `config.yaml`
-
-## Installation
-
-```shell
-composer install
-```
-
 ## Usage
 
 ```shell
-php mantis2github [command]
+mantis2github [command]
 ```
 
 ### Available Commands

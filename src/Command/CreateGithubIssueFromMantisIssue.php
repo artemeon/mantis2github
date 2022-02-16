@@ -36,7 +36,7 @@ class CreateGithubIssueFromMantisIssue extends Command
     protected function configure()
     {
         $this->setName('sync');
-        $this->setDescription('creates a github issue from a mantis issue');
+        $this->setDescription('Synchronize a Mantis Issue to GitHub');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

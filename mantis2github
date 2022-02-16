@@ -13,13 +13,14 @@
 
     public function main()
     {
-        require './vendor/autoload.php';
+        require_once __DIR__ . '/vendor/autoload.php';
 
-        $configVals = (new \Artemeon\M2G\Config\ConfigReader())->read();
-        $githubConnector = new \Artemeon\M2G\Service\GithubConnector($configVals);
-        $mantisConnector = new \Artemeon\M2G\Service\MantisConnector($configVals);
+        $configValues = (new \Artemeon\M2G\Config\ConfigReader())->read();
+        $githubConnector = new \Artemeon\M2G\Service\GithubConnector($configValues);
+        $mantisConnector = new \Artemeon\M2G\Service\MantisConnector($configValues);
 
-        $app = new \Symfony\Component\Console\Application('Mantis 2 Github', 0.1);
+        $app = new \Symfony\Component\Console\Application('Mantis 2 Github', 'v1.0.0');
+        $app->add(new \Artemeon\M2G\Command\ConfigurationCommand());
         $app->add(new \Artemeon\M2G\Command\ReadMantisIssueCommand($mantisConnector));
         $app->add(new \Artemeon\M2G\Command\ReadGithubIssueCommand($githubConnector));
         $app->add(new \Artemeon\M2G\Command\CreateGithubIssueFromMantisIssue($mantisConnector, $githubConnector));

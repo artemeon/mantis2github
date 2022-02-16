@@ -32,8 +32,8 @@ class ReadMantisIssueCommand extends Command
 
     protected function configure()
     {
-        $this->setName('mantis-read');
-        $this->setDescription('read details of a mantis issue');
+        $this->setName('read:mantis');
+        $this->setDescription('Read details of a Mantis issue');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)

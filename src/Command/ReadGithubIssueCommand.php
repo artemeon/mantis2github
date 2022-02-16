@@ -11,12 +11,8 @@
 namespace Artemeon\M2G\Command;
 
 use Artemeon\M2G\Service\GithubConnector;
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Helper\QuestionHelper;
-use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\Question;
+
+use function Termwind\render;
 
 class ReadGithubIssueCommand extends Command
 {
@@ -34,30 +30,51 @@ class ReadGithubIssueCommand extends Command
 
     protected function configure()
     {
-        $this->setName('github-read');
-        $this->setDescription('read details of a github issue');
+        $this->setName('read:github');
+        $this->setDescription('Read details of a GitHub issue');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function handle(): int
     {
-        $output->writeln('Github Details');
-        $question = new Question('Github Issue ID: ');
-        /** @var QuestionHelper $helper */
-        $helper = $this->getHelper('question');
-        $id = $helper->ask($input, $output, $question);
+        render(<<<HTML
+<div class="my-1 mx-1 px-2 bg-green-500 text-gray-900">
+    GitHub Issue Details
+</div>
+HTML);
+
+        $id = $this->ask(' GitHub Issue ID:');
 
         if (!is_numeric($id)) {
-            $output->writeln('<error>Provide issue id</error>');
+            $this->error('Provide issue id');
+            return 1;
         }
+
+        $this->info('Fetching issue details...');
 
         $issue = $this->githubConnector->readIssue((int)$id);
 
-        $table = new Table($output);
-        $table->addRow(['ID', $issue->getId()]);
-        $table->addRow(['Number', '#' . $issue->getNumber()]);
-        $table->addRow(['Title', $issue->getTitle()]);
-        $table->addRow(['URL', $issue->getIssueUrl()]);
-        $table->render();
+        render(<<<HTML
+<table>
+    <tbody>
+        <tr>
+            <th>ID</th>
+            <td>{$issue->getId()}</td>
+        </tr>
+        <tr>
+            <th>Number</th>
+            <td>#{$issue->getNumber()}</td>
+        </tr>
+        <tr>
+            <th>Title</th>
+            <td>{$issue->getTitle()}</td>
+        </tr>
+        <tr>
+            <th>URL</th>
+            <td>{$issue->getIssueUrl()}</td>
+        </tr>
+    </tbody>
+</table>
+HTML);
 
         return 0;
     }
