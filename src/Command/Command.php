@@ -75,7 +75,7 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
 
     protected function info(string $message)
     {
-        $this->output->writeln(' ' . $message);
+        $this->output->writeln($message);
     }
 
     protected function error(string $message)
@@ -91,7 +91,7 @@ HTML
 
     protected function success(string $message)
     {
-        $this->output->writeln("<info> $message</info>");
+        $this->output->writeln("<info>$message</info>");
     }
 
     protected function warn(string $message)
