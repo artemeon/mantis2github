@@ -16,7 +16,7 @@ class ConfigReader
 {
     public function read(): ?ConfigValues
     {
-        $configFile = __DIR__ . '/../../config.yaml';
+        $configFile = __DIR__ . '/../../../config.yaml';
 
         if (!file_exists($configFile)) {
             return null;
