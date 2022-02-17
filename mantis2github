@@ -12,7 +12,7 @@
 (new class() {
     public function main()
     {
-        require_once $_composer_autoload_path ?? __DIR__ . '/vendor/autoload.php';
+        require_once $_composer_autoload_path ?? __DIR__ . '/../vendor/autoload.php';
 
         $configValues = (new \Artemeon\M2G\Config\ConfigReader())->read();
         $githubConnector = new \Artemeon\M2G\Service\GithubConnector($configValues);

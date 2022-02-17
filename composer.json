@@ -24,6 +24,6 @@
     "symfony/console": "^5.0",
     "symfony/yaml": "^5.0",
     "nunomaduro/termwind": "^1.5",
-    "composer-runtime-api": "^2.2"
+    "composer-runtime-api": "^2.2.2"
   }
 }
