@@ -1,5 +1,9 @@
 # Mantis 2 Github Connector
 
+[![Packagist Version](https://img.shields.io/packagist/v/artemeon/mantis2github)](https://packagist.org/packages/artemeon/mantis2github)
+[![Packagist Downloads](https://img.shields.io/packagist/dt/artemeon/mantis2github)](https://packagist.org/packages/artemeon/mantis2github)
+[![GitHub](https://img.shields.io/github/license/artemeon/mantis2github)](https://packagist.org/packages/artemeon/mantis2github)
+
 A small CLI tool to create a GitHub issue out of a Mantis issue.
 Creates cross-references, so links the GitHub issue to mantis and vice versa.
 
