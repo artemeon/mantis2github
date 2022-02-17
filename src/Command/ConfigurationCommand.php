@@ -4,6 +4,8 @@ namespace Artemeon\M2G\Command;
 
 use Artemeon\M2G\Config\ConfigReader;
 use Artemeon\M2G\Service\GithubConnector;
+use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Yaml\Yaml;
 
 use function Termwind\{render, terminal};
 
@@ -25,12 +27,15 @@ class ConfigurationCommand extends Command
 
     protected function configure()
     {
-        $this->setName('configure');
-        $this->setDescription('Configure the tool');
+        $this->setName('configure')
+            ->setDescription('Configure the tool')
+            ->addArgument('file', InputArgument::OPTIONAL, 'The config.yaml to use for setting up the tool.');
     }
 
     protected function handle(): int
     {
+        $this->readExistingConfigFromPath();
+
         terminal()->clear();
 
         $this->header();
@@ -158,5 +163,38 @@ HTML
         );
 
         $this->success(" Synchronize your first issue by running `mantis2github sync`!\n");
+    }
+
+    protected function readExistingConfigFromPath()
+    {
+        if (!$this->argument('file')) {
+            return;
+        }
+
+        if (!file_exists($this->argument('file'))) {
+            $this->error('The given config file does not exist.');
+
+            exit(1);
+        }
+
+        $config = Yaml::parseFile($this->argument('file'));
+
+        if (!$config['MANTIS_URL'] || !$config['MANTIS_TOKEN'] || !$config['GITHUB_TOKEN'] || !$config['GITHUB_REPOSITORY']) {
+            $this->error('The given config file is incomplete.');
+            $this->info('Please configure the tool without the file parameter.');
+
+            exit(1);
+        }
+
+        $this->config = [
+            'mantisUrl' => $config['MANTIS_URL'],
+            'mantisToken' => $config['MANTIS_TOKEN'],
+            'githubToken' => $config['GITHUB_TOKEN'],
+            'githubRepository' => $config['GITHUB_REPOSITORY'],
+        ];
+
+        $this->saveConfig();
+
+        exit(0);
     }
 }

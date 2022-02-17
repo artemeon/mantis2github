@@ -38,7 +38,7 @@ class CreateGithubIssueFromMantisIssue extends Command
     protected function configure()
     {
         $this->setName('sync')
-            ->setDescription('Synchronize a Mantis issue to GitHub')
+            ->setDescription('Synchronize a list of Mantis issues to GitHub')
             ->addArgument('ids', InputArgument::IS_ARRAY | InputArgument::REQUIRED, 'Mantis issue ids');
     }
 
