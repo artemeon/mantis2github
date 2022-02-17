@@ -1,7 +1,7 @@
 # Mantis 2 Github Connector
 
-A small CLI tool used to create a GitHub Isse out of a mantis issue.
-Creates cross-references, so links the github issue to mantis and vice versa.
+A small CLI tool to create a GitHub issue out of a Mantis issue.
+Creates cross-references, so links the GitHub issue to mantis and vice versa.
 
 ## Installation
 
@@ -9,24 +9,15 @@ Creates cross-references, so links the github issue to mantis and vice versa.
 composer global require artemeon/mantis2github
 ```
 
-## (Initial) Set up
+## Configuration
 
-When you first installed the package, call the `setup` command. You only need to do this once.
+When you first installed the package, call the `configure` command. You only need to do this once.
 
 ```shell
-mantis2github setup
+mantis2github configure
 ```
 
-You will be directed through the installation process.
-
-### Mantis:
-- Go to User Settings
-- Go to **Api-Token** tab
-
-### Github
-- Go to https://github.com/settings/tokens
-- Click **Generate new token**
-- Enter Note & check `repo` in **select scopes**
+The command will direct you through the installation process.
 
 ## Usage
 
@@ -36,8 +27,50 @@ mantis2github [command]
 
 ### Available Commands
 
-| Command       | Description                               |
-|---------------|-------------------------------------------|
-| `sync`        | Create a GitHub Issue from a Mantis Issue |
-| `github-read` | Read details of a GitHub Issue            |
-| `mantis-read` | Read details of a Mantis Issue            |
+| Command                      | Description                               |
+|------------------------------|-------------------------------------------|
+| [`sync`](#sync)              | Create a GitHub issue from a Mantis issue |
+| [`read:github`](#readgithub) | Read details of a GitHub issue            |
+| [`read:mantis`](#readmantis) | Read details of a Mantis issue            |
+
+#### `sync`
+
+Create a GitHub issue from a Mantis issue.
+
+```shell
+mantis2github sync [id]
+```
+
+##### Arguments
+
+| Argument | required | Description     |
+|----------|----------|-----------------|
+| `id`     | `false`  | Mantis issue id |
+
+#### `read:github`
+
+Read details of a GitHub issue.
+
+```shell
+mantis2github read:github [id]
+```
+
+##### Arguments
+
+| Argument | required | Description     |
+|----------|----------|-----------------|
+| `id`     | `false`  | GitHub issue id |
+
+#### `read:mantis`
+
+Read details of a Mantis issue.
+
+```shell
+mantis2github read:mantis [id]
+```
+
+##### Arguments
+
+| Argument | required | Description     |
+|----------|----------|-----------------|
+| `id`     | `false`  | Mantis issue id |

@@ -2,10 +2,13 @@
 
 namespace Artemeon\M2G\Command;
 
+use Artemeon\M2G\Config\ConfigReader;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
+
+use function Termwind\render;
 
 abstract class Command extends \Symfony\Component\Console\Command\Command
 {
@@ -18,6 +21,40 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
         $this->output = $output;
 
         return $this->handle();
+    }
+
+    protected function arguments(): array
+    {
+        return $this->input->getArguments();
+    }
+
+    protected function argument(string $name): ?string
+    {
+        return $this->input->getArgument($name);
+    }
+
+    protected function options(): array
+    {
+        return $this->input->getOptions();
+    }
+
+    protected function option(string $name): ?string
+    {
+        return $this->input->getOption($name);
+    }
+
+    protected function header(): void
+    {
+        $this->success(
+            '
+  __  __                _    _        <comment>____</comment>     ____  _  _    _   _         _     
+ |  \/  |  __ _  _ __  | |_ (_) ___  <comment>|___ \ </comment>  / ___|(_)| |_ | | | | _   _ | |__  
+ | |\/| | / _` || \'_ \ | __|| |/ __|   <comment>__) |</comment> | |  _ | || __|| |_| || | | || \'_ \ 
+ | |  | || (_| || | | || |_ | |\__ \  <comment>/ __/</comment>  | |_| || || |_ |  _  || |_| || |_) |
+ |_|  |_| \__,_||_| |_| \__||_||___/ <comment>|_____|</comment>  \____||_| \__||_| |_| \__,_||_.__/ 
+
+'
+        );
     }
 
     protected function ask(string $question, string $default = null, bool $hidden = false)
@@ -38,22 +75,48 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
 
     protected function info(string $message)
     {
-        $this->output->writeln($message);
+        $this->output->writeln(' ' . $message);
     }
 
     protected function error(string $message)
     {
-        $this->output->writeln("<error>$message</error>");
+        render(
+            <<<HTML
+<div class="my-1 ml-1 px-1 bg-red-400 text-white">
+    $message
+</div>
+HTML
+        );
     }
 
     protected function success(string $message)
     {
-        $this->output->writeln("<info>$message</info>");
+        $this->output->writeln("<info> $message</info>");
     }
 
     protected function warn(string $message)
     {
-        $this->output->writeln("<comment>$message</comment>");
+        render(
+            <<<HTML
+<div class="ml-1 px-1 bg-yellow-500 text-gray-900">
+    <strong>! $message !</strong>
+</div>
+HTML
+        );
+    }
+
+    protected function checkConfig(): void
+    {
+        $config = (new ConfigReader())->read();
+
+        if (!$config) {
+            $this->info('');
+            $this->warn('You have not configured mantis2github yet');
+            $this->warn('Please run "mantis2github configure" to get started');
+            $this->info('');
+
+            exit(1);
+        }
     }
 
     abstract protected function handle(): int;

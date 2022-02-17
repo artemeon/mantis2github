@@ -12,7 +12,6 @@ namespace Artemeon\M2G\Config;
 
 class ConfigValues
 {
-
     private string $mantisUrl;
     private string $mantisToken;
 
@@ -52,6 +51,4 @@ class ConfigValues
     {
         return $this->githubRepo;
     }
-
-
 }

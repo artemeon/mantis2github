@@ -2,11 +2,26 @@
 
 namespace Artemeon\M2G\Command;
 
-use function Termwind\{render};
+use Artemeon\M2G\Config\ConfigReader;
+use Artemeon\M2G\Service\GithubConnector;
+
+use function Termwind\{render, terminal};
 
 class ConfigurationCommand extends Command
 {
     protected string $configPath = __DIR__ . '/../../config.yaml';
+    protected array $config = [];
+
+    private GithubConnector $githubConnector;
+
+    /**
+     * @param GithubConnector $mantisConnector
+     */
+    public function __construct(GithubConnector $mantisConnector)
+    {
+        parent::__construct();
+        $this->githubConnector = $mantisConnector;
+    }
 
     protected function configure()
     {
@@ -16,61 +31,134 @@ class ConfigurationCommand extends Command
 
     protected function handle(): int
     {
-        $this->success("
-  __  __                _    _        ____     ____  _  _    _   _         _     
- |  \/  |  __ _  _ __  | |_ (_) ___  |___ \   / ___|(_)| |_ | | | | _   _ | |__  
- | |\/| | / _` || '_ \ | __|| |/ __|   __) | | |  _ | || __|| |_| || | | || '_ \ 
- | |  | || (_| || | | || |_ | |\__ \  / __/  | |_| || || |_ |  _  || |_| || |_) |
- |_|  |_| \__,_||_| |_| \__||_||___/ |_____|  \____||_| \__||_| |_| \__,_||_.__/ 
+        terminal()->clear();
 
-");
+        $this->header();
 
-        $hasConfig = file_exists($this->configPath);
+        $hasConfig = (new ConfigReader())->read();
 
-        if ($hasConfig) {
-            render(<<<'HTML'
-<div class="mb-1">
-    <div class="mx-1 px-1 bg-yellow-500 text-gray-900">
-        <strong>! Config file already exists !</strong>
-    </div>
-    <div class="mx-1 px-1 bg-yellow-500 text-gray-900">
-        <strong>! If you continue your config will be overwritten !</strong>
-    </div>
-</div>
-HTML);
+        if ($hasConfig !== null) {
+            $this->warn('Configuration file already exists');
+            $this->warn('If you continue your configuration will be overwritten');
 
-            if ($this->ask(' Are you sure you want to continue? [Y/n]', 'n') !== 'Y') {
+            if ($this->ask("\n Are you sure you want to continue? [Y/n]", 'n') !== 'Y') {
+                $this->info("\n Alright!\n");
                 return 1;
             }
         }
 
-        $config = [];
+        terminal()->clear();
 
-        $this->info("\n Please enter the URL of your Mantis installation (including http:// or https://):");
+        $this->header();
 
-        $config['mantisUrl'] = $this->ask(" >");
+        $this->askForMantisUrl();
+        $this->askForMantisToken();
+        $this->askForGitHubToken();
+        $this->askForGitHubRepository();
+        $this->saveConfig();
 
-        $parsedUrl = parse_url($config['mantisUrl']);
+        return 0;
+    }
+
+    protected function askForMantisUrl(): void
+    {
+        $this->info(" Please enter the URL of your Mantis installation (e.g. https://tickets.company.tld):");
+
+        $mantisUrl = $this->ask(" >");
+
+        $parsedUrl = parse_url($mantisUrl);
 
         if ($parsedUrl === false || !isset($parsedUrl['scheme']) || !isset($parsedUrl['host'])) {
-            return 1;
+            $this->error("The URL you entered is invalid.");
+
+            $this->askForMantisUrl();
         }
 
         $port = isset($parsedUrl['port']) ? ':' . $parsedUrl['port'] : '';
 
-        $config['mantisUrl'] = "{$parsedUrl['scheme']}://{$parsedUrl['host']}$port/";
+        $mantisUrl = "{$parsedUrl['scheme']}://{$parsedUrl['host']}$port/";
 
         // Check if something is available on the given URL
         // If not, we assume that the URL is wrong
-        $headers = @get_headers($config['mantisUrl']);
+        $headers = @get_headers($mantisUrl);
         if (!$headers || $headers[0] === 'HTTP/1.1 404 Not Found') {
-            return 1;
+            $this->error(
+                "The given URL is unreachable. If this error persists, please check your internet connection."
+            );
+
+            $this->askForMantisUrl();
         }
 
-        $this->info("\n Please enter an API token to got from {$config['mantisUrl']}api_tokens_page.php:");
+        $this->config['mantisUrl'] = $mantisUrl;
+    }
 
-        $mantisToken = $this->secret(" >");
+    protected function askForMantisToken(): void
+    {
+        $this->info("\n Head over to {$this->config['mantisUrl']}api_tokens_page.php, create a new API token,");
+        $this->info(" and enter the token here:");
 
-        return 0;
+        $token = $this->secret(" >");
+
+        if (empty($token)) {
+            $this->askForMantisToken();
+        }
+
+        $this->config['mantisToken'] = $token;
+    }
+
+    protected function askForGitHubToken(): void
+    {
+        $this->info("\n Head over to https://github.com/settings/tokens, create a new personal access token");
+        $this->info(" with the `repo` scope and enter the token here:");
+
+        $token = $this->secret(" >");
+
+        if (empty($token)) {
+            $this->askForGitHubToken();
+        }
+
+        $this->config['githubToken'] = $token;
+    }
+
+    protected function askForGitHubRepository(): void
+    {
+        $this->info("\n Enter the GitHub repository you want to create issues for (e.g. user/repository):");
+
+        $repository = $this->ask(" >");
+
+        if (empty($repository) || count(explode('/', $repository)) !== 2) {
+            $this->error("The given repository is invalid.");
+
+            $this->askForGitHubRepository();
+        }
+
+        if ($this->githubConnector->readRepository($repository) === null) {
+            $this->error("The given repository does not exist.");
+
+            $this->askForGitHubRepository();
+        }
+
+        $this->config['githubRepository'] = $repository;
+    }
+
+    protected function saveConfig(): void
+    {
+        $stub = file_get_contents(__DIR__ . '/../../stubs/config.yaml.stub');
+
+        $configContent = preg_replace_callback('/{{([a-z0-9_]+)}}/i', function ($matches) {
+            return $this->config[$matches[1]] ?? '';
+        }, $stub);
+
+        file_put_contents($this->configPath, $configContent);
+
+        render(
+            <<<HTML
+<div class="my-1 ml-1 px-1 bg-green-500 text-gray-900">
+    <strong>🚀 Ready for liftoff! 🚀</strong>
+</div>
+HTML
+        );
+
+        $this->success(" Synchronize your first issue by running `mantis2github sync`!\n");
     }
 }

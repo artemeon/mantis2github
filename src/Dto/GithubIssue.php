@@ -17,25 +17,39 @@ class GithubIssue
     private string $title;
     private string $description;
     private string $issueUrl;
+    private string $state;
+    private array $assignees;
+    private array $labels;
 
-    public function __construct(?int $id, ?int $number, string $summary, string $description, string $issueUrl)
-    {
+    public function __construct(
+        ?int $id,
+        ?int $number,
+        string $summary,
+        string $description,
+        string $issueUrl,
+        string $state = 'open',
+        array $assignees = [],
+        array $labels = []
+    ) {
         $this->id = $id;
         $this->title = $summary;
         $this->description = $description;
         $this->number = $number;
         $this->issueUrl = $issueUrl;
+        $this->state = $state;
+        $this->assignees = $assignees;
+        $this->labels = $labels;
     }
-
 
     public static function fromMantisIssue(MantisIssue $issue): GithubIssue
     {
-        return new GithubIssue(
+        return new self(
             null,
             null,
             $issue->getSummary(),
             $issue->getIssueUrl() . PHP_EOL . PHP_EOL . $issue->getDescription(),
-            ''
+            '',
+            '',
         );
     }
 
@@ -64,5 +78,25 @@ class GithubIssue
         return $this->issueUrl;
     }
 
+    public function getState(): string
+    {
+        return $this->state;
+    }
 
+    public function getAssignees(): array
+    {
+        return $this->assignees;
+    }
+
+    public function setLabels(array $labels = []): self
+    {
+        $this->labels = $labels;
+
+        return $this;
+    }
+
+    public function getLabels(): array
+    {
+        return $this->labels;
+    }
 }

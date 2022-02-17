@@ -1,9 +1,8 @@
 {
   "name": "artemeon/mantis2github",
-  "version": "0.0.0",
-  "license": "MIT",
+  "description": "A small CLI tool to create a GitHub issue out of a Mantis issue.",
   "type": "library",
-  "description": "",
+  "license": "MIT",
   "bin": [
     "mantis2github"
   ],
@@ -25,8 +24,5 @@
     "symfony/console": "^5.0",
     "symfony/yaml": "^5.0",
     "nunomaduro/termwind": "^1.5"
-  },
-  "scripts": {
-    "mantis2github": "Artemeon\\M2G\\Command\\Sync2Github::run"
   }
 }

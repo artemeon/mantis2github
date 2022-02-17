@@ -10,7 +10,6 @@
  */
 
 (new class() {
-
     public function main()
     {
         require_once __DIR__ . '/vendor/autoload.php';
@@ -20,14 +19,12 @@
         $mantisConnector = new \Artemeon\M2G\Service\MantisConnector($configValues);
 
         $app = new \Symfony\Component\Console\Application('Mantis 2 Github', 'v1.0.0');
-        $app->add(new \Artemeon\M2G\Command\ConfigurationCommand());
+        $app->add(new \Artemeon\M2G\Command\ConfigurationCommand($githubConnector));
         $app->add(new \Artemeon\M2G\Command\ReadMantisIssueCommand($mantisConnector));
         $app->add(new \Artemeon\M2G\Command\ReadGithubIssueCommand($githubConnector));
         $app->add(new \Artemeon\M2G\Command\CreateGithubIssueFromMantisIssue($mantisConnector, $githubConnector));
         $app->run();
     }
-
-
 })->main();
 
 

@@ -16,9 +16,9 @@ use GuzzleHttp\Client;
 
 class MantisConnector
 {
-    private ConfigValues $config;
+    private ?ConfigValues $config;
 
-    public function __construct(ConfigValues $config)
+    public function __construct(?ConfigValues $config)
     {
         $this->config = $config;
     }
@@ -40,8 +40,12 @@ class MantisConnector
             $result['issues'][0]['description'],
             $result['issues'][0]['project']['name'],
             $result['issues'][0]['status']['name'],
+            $result['issues'][0]['resolution']['name'],
+            $result['issues'][0]['handler']['real_name'] ?? $result['issues'][0]['handler']['name'] ?? null,
             $this->config->getMantisUrl() . '/view.php?id=' . $result['issues'][0]['id'],
-            null, null, null
+            null,
+            null,
+            null,
         );
         $this->updateUpstreamFieldsIssue($result['issues'][0], $issue);
 
