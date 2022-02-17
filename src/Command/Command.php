@@ -28,7 +28,7 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
         return $this->input->getArguments();
     }
 
-    protected function argument(string $name): ?string
+    protected function argument(string $name)
     {
         return $this->input->getArgument($name);
     }
@@ -38,7 +38,7 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
         return $this->input->getOptions();
     }
 
-    protected function option(string $name): ?string
+    protected function option(string $name)
     {
         return $this->input->getOption($name);
     }

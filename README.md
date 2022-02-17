@@ -39,17 +39,31 @@ mantis2github [command]
 
 #### `sync`
 
-Create a GitHub issue from a Mantis issue.
+Create a GitHub issue from a list of Mantis issues.
 
 ```shell
-mantis2github sync [id]
+mantis2github sync <ids>...
 ```
 
 ##### Arguments
 
-| Argument | required | Description     |
-|----------|----------|-----------------|
-| `id`     | `false`  | Mantis issue id |
+| Argument | required | Description      |
+|----------|----------|------------------|
+| `ids`    | `true`   | Mantis issue ids |
+
+##### Examples
+
+###### Sync a single issue
+
+```shell
+mantis2github sync 123
+```
+
+###### Sync multiple issues
+
+```shell
+mantis2github sync 123 456 789
+```
 
 #### `read:github`
 
