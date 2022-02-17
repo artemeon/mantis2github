@@ -37,7 +37,13 @@
 
             unset($GLOBALS['_composer_autoload_path']);
         } else {
-            foreach ([__DIR__ . '/../../autoload.php', __DIR__ . '/../vendor/autoload.php', __DIR__ . '/vendor/autoload.php'] as $file) {
+            foreach (
+                [
+                    __DIR__ . '/../../autoload.php',
+                    __DIR__ . '/../vendor/autoload.php',
+                    __DIR__ . '/vendor/autoload.php'
+                ] as $file
+            ) {
                 if (file_exists($file)) {
                     define('COMPOSER_INSTALL_PATH', $file);
 
@@ -58,7 +64,13 @@
         $name = $packageJson['name'] ?? null;
         $this->name = explode('/', $name)[1] ?? null;
 
-        foreach ([__DIR__ . '/../../composer/installed.php', __DIR__ . '/../vendor/composer/installed.php', __DIR__ . '/vendor/composer/installed.php'] as $file) {
+        foreach (
+            [
+                __DIR__ . '/../../composer/installed.php',
+                __DIR__ . '/../vendor/composer/installed.php',
+                __DIR__ . '/vendor/composer/installed.php'
+            ] as $file
+        ) {
             if (file_exists($file)) {
                 $installed = require $file;
                 $this->version = $installed['versions'][$name]['pretty_version'] ?? null;
@@ -66,6 +78,8 @@
                 break;
             }
         }
+
+        unset($file, $installed);
     }
 })->main();
 
