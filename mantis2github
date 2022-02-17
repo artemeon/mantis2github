@@ -10,7 +10,27 @@
  */
 
 (new class() {
+    protected string $name;
+    protected string $version;
+
     public function main()
+    {
+        $this->autoload();
+        $this->fetchVersion();
+
+        $configValues = (new \Artemeon\M2G\Config\ConfigReader())->read();
+        $githubConnector = new \Artemeon\M2G\Service\GithubConnector($configValues);
+        $mantisConnector = new \Artemeon\M2G\Service\MantisConnector($configValues);
+
+        $app = new \Symfony\Component\Console\Application($this->name, $this->version);
+        $app->add(new \Artemeon\M2G\Command\ConfigurationCommand($githubConnector));
+        $app->add(new \Artemeon\M2G\Command\ReadMantisIssueCommand($mantisConnector));
+        $app->add(new \Artemeon\M2G\Command\ReadGithubIssueCommand($githubConnector));
+        $app->add(new \Artemeon\M2G\Command\CreateGithubIssueFromMantisIssue($mantisConnector, $githubConnector));
+        $app->run();
+    }
+
+    protected function autoload()
     {
         if (isset($GLOBALS['_composer_autoload_path'])) {
             define('COMPOSER_INSTALL_PATH', $GLOBALS['_composer_autoload_path']);
@@ -29,17 +49,23 @@
         }
 
         require COMPOSER_INSTALL_PATH;
+    }
 
-        $configValues = (new \Artemeon\M2G\Config\ConfigReader())->read();
-        $githubConnector = new \Artemeon\M2G\Service\GithubConnector($configValues);
-        $mantisConnector = new \Artemeon\M2G\Service\MantisConnector($configValues);
+    protected function fetchVersion()
+    {
+        $packageJson = json_decode(file_get_contents(__DIR__ . '/composer.json'), true);
 
-        $app = new \Symfony\Component\Console\Application('Mantis 2 Github', 'v1.0.0');
-        $app->add(new \Artemeon\M2G\Command\ConfigurationCommand($githubConnector));
-        $app->add(new \Artemeon\M2G\Command\ReadMantisIssueCommand($mantisConnector));
-        $app->add(new \Artemeon\M2G\Command\ReadGithubIssueCommand($githubConnector));
-        $app->add(new \Artemeon\M2G\Command\CreateGithubIssueFromMantisIssue($mantisConnector, $githubConnector));
-        $app->run();
+        $name = $packageJson['name'] ?? null;
+        $this->name = explode('/', $name)[1] ?? null;
+
+        foreach ([__DIR__ . '/../../composer/installed.php', __DIR__ . '/../vendor/composer/installed.php', __DIR__ . '/vendor/composer/installed.php'] as $file) {
+            if (file_exists($file)) {
+                $installed = require $file;
+                $this->version = $installed['versions'][$name]['pretty_version'] ?? null;
+
+                break;
+            }
+        }
     }
 })->main();
 
