@@ -11,7 +11,7 @@ use function Termwind\{render, terminal};
 
 class ConfigurationCommand extends Command
 {
-    protected string $configPath = __DIR__ . '/../../config.yaml';
+    protected string $configPath = __DIR__ . '/../../../config.yaml';
     protected array $config = [];
 
     private GithubConnector $githubConnector;
