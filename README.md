@@ -23,6 +23,14 @@ mantis2github configure
 
 The command will direct you through the installation process.
 
+### Quick setup
+
+If you have used a previous version of this package and already have a `config.yaml` file, you can skip the configuration by running:
+
+```shell
+mantis2github configure path/to/config.yaml
+```
+
 ## Usage
 
 ```shell
