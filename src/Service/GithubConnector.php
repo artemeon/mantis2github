@@ -25,18 +25,6 @@ class GithubConnector
         $this->config = $config;
     }
 
-    public function readRepository(string $repository): ?array
-    {
-        try {
-            $response = $this->getDefaultClient()->get('/repos/' . $repository);
-            $result = json_decode($response->getBody(), true);
-        } catch (GuzzleException $e) {
-            $result = null;
-        }
-
-        return $result;
-    }
-
     public function readIssue(int $number): ?GithubIssue
     {
         try {

@@ -100,6 +100,8 @@ class ConfigurationCommand extends Command
         $token = $this->secret(" >");
 
         if (empty($token)) {
+            $this->error('The token is empty. Please try again.');
+
             $this->askForMantisToken();
         }
 
@@ -114,6 +116,8 @@ class ConfigurationCommand extends Command
         $token = $this->secret(" >");
 
         if (empty($token)) {
+            $this->error('The token is empty. Please try again.');
+
             $this->askForGitHubToken();
         }
 
@@ -128,12 +132,6 @@ class ConfigurationCommand extends Command
 
         if (empty($repository) || count(explode('/', $repository)) !== 2) {
             $this->error("The given repository is invalid.");
-
-            $this->askForGitHubRepository();
-        }
-
-        if ($this->githubConnector->readRepository($repository) === null) {
-            $this->error("The given repository does not exist.");
 
             $this->askForGitHubRepository();
         }
