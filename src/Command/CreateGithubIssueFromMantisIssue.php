@@ -15,12 +15,10 @@ use Artemeon\M2G\Dto\MantisIssue;
 use Artemeon\M2G\Service\GithubConnector;
 use Artemeon\M2G\Service\MantisConnector;
 use GuzzleHttp\Exception\GuzzleException;
-use Symfony\Component\Console\Helper\QuestionHelper;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\Question;
+use Symfony\Component\Console\Input\InputOption;
 
 use function Termwind\render;
 
@@ -41,7 +39,7 @@ class CreateGithubIssueFromMantisIssue extends Command
     {
         $this->setName('sync')
             ->setDescription('Synchronize a Mantis issue to GitHub')
-            ->addArgument('id', InputArgument::OPTIONAL, 'Mantis issue id');
+            ->addArgument('ids', InputArgument::IS_ARRAY | InputArgument::REQUIRED, 'Mantis issue ids');
     }
 
     protected function header(): void
@@ -63,100 +61,78 @@ HTML
 
         $this->success(" Creates a new GitHub issue from a Mantis issue.");
 
-        $mantisIssue = $this->askForMantisIssue();
+        $ids = array_unique($this->argument('ids'));
 
         $this->info('');
 
+        $progressBar = new ProgressBar($this->output, count($ids));
+        $progressBar->start();
+
+        $labels = array_map(function ($label) {
+            return $label['name'];
+        }, $this->githubConnector->getLabels());
+
+        $issues = [];
+
+        foreach ($ids as $id) {
+            $mantisIssue = $this->mantisConnector->readIssue((int)$id);
+
+            if (!empty($mantisIssue->getUpstreamTicket())) {
+                $issues[] = [
+                    'id' => $id,
+                    'icon' => '<comment>!</comment>',
+                    'message' => '<comment>Mantis issue already synchronized.</comment>',
+                    'issue' => $mantisIssue->getUpstreamTicket(),
+                ];
+                continue;
+            }
+
+            $newGithubIssue = GithubIssue::fromMantisIssue($mantisIssue);
+
+            $filteredLabels = array_filter($labels, function ($label) use ($mantisIssue) {
+                return strtolower($label) === strtolower($mantisIssue->getProject());
+            });
+
+            $newGithubIssue->setLabels($filteredLabels);
+
+            try {
+                $newGithubIssue = $this->githubConnector->createIssue($newGithubIssue);
+            } catch (GuzzleException | \Exception $e) {
+                $issues[] = [
+                    'id' => $id,
+                    'icon' => '<error>✕</error>',
+                    'message' => '<error>GitHub issue could not be created.</error>',
+                    'issue' => '',
+                ];
+                continue;
+            }
+
+            $mantisIssue->setUpstreamTicket($newGithubIssue->getIssueUrl());
+            $this->mantisConnector->patchUpstreamField($mantisIssue);
+
+            $issues[] = [
+                'id' => $id,
+                'icon' => '<info>✓</info>',
+                'message' => '<info>Mantis issue has been synchronized.</info>',
+                'issue' => $newGithubIssue->getIssueUrl(),
+            ];
+
+            $progressBar->advance();
+        }
+
+        $progressBar->finish();
+
+        $this->info("\n");
+
         $table = new Table($this->output);
-        $table->setHeaders(['ID', 'Summary', 'Resolution']);
-        $table->addRow([$mantisIssue->getId(), $mantisIssue->getSummary(), $mantisIssue->getResolution()]);
+        $table->setHeaders(['', 'Mantis issue ID', 'Message', 'GitHub Issue']);
+        foreach($issues as $issue) {
+            $table->addRow([$issue['icon'], $issue['id'], $issue['message'], $issue['issue']]);
+        }
         $table->render();
 
-        if (!empty($mantisIssue->getUpstreamTicket())) {
-            $this->info('');
-            $this->warn("GitHub issue already exists");
-            $this->info("\n {$mantisIssue->getUpstreamTicket()}\n");
-
-            return 1;
-        }
-
-        $confirmation = $this->ask("\n Do you want to create a new issue on GitHub? [Y/n] ", 'n');
-
-        if ($confirmation !== 'Y') {
-            $this->error('Aborted.');
-
-            return 1;
-        }
-
-        $this->info("\n Creating new GitHub issue ...");
-
-        $newGithubIssue = GithubIssue::fromMantisIssue($mantisIssue);
-
-        $labels = array_values(array_map(function ($label) {
-            return $label['name'];
-        }, array_filter($this->githubConnector->getLabels(), function ($label) use ($mantisIssue) {
-            return strtolower($label['name']) === strtolower($mantisIssue->getProject());
-        })));
-
-        $newGithubIssue->setLabels($labels);
-
-        try {
-            $newGithubIssue = $this->githubConnector->createIssue($newGithubIssue);
-        } catch (GuzzleException | \Exception $e) {
-            $this->error('Failed to create GitHub issue.');
-
-            return 1;
-        }
-
-        $this->success("\n Successfully created GitHub issue #{$newGithubIssue->getNumber()}.");
-
-        $this->info("\n Updating upstream ticket of Mantis issue ...");
-
-        $mantisIssue->setUpstreamTicket($newGithubIssue->getIssueUrl());
-        $this->mantisConnector->patchUpstreamField($mantisIssue);
-
-        $this->success("\n Mantis upstream issue updated successfully.");
-        $this->success(" {$mantisIssue->getUpstreamTicket()}");
-
-        if (empty($this->argument('id'))) {
-            $startOver = $this->ask("\n Do you want to sync another issue? [Y/n] ", 'n');
-
-            if ($startOver === 'Y') {
-                $this->handle();
-            }
-        }
+        $this->info('');
 
         return 0;
-    }
-
-    protected function askForMantisIssue(): MantisIssue
-    {
-        $id = $this->argument('id') ?? $this->ask("\n Mantis ID: ");
-
-        if (!is_numeric($id)) {
-            $this->error('Please provide a valid issue id.');
-
-            if (empty($this->argument('id'))) {
-                $this->askForMantisIssue();
-            }
-
-            exit(1);
-        }
-
-        $this->info("\n Fetching issue details ...");
-
-        $mantisIssue = $this->mantisConnector->readIssue((int)$id);
-
-        if ($mantisIssue === null) {
-            $this->error('Issue not found.');
-
-            if (empty($this->argument('id'))) {
-                $this->askForMantisIssue();
-            }
-
-            exit(1);
-        }
-
-        return $mantisIssue;
     }
 }
