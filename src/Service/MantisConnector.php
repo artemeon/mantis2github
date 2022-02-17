@@ -16,9 +16,9 @@ use GuzzleHttp\Client;
 
 class MantisConnector
 {
-    private ConfigValues $config;
+    private ?ConfigValues $config;
 
-    public function __construct(ConfigValues $config)
+    public function __construct(?ConfigValues $config)
     {
         $this->config = $config;
     }
@@ -26,7 +26,9 @@ class MantisConnector
     public function readIssue(int $number): ?MantisIssue
     {
         try {
-            $response = $this->getDefaultClient()->get(rtrim($this->config->getMantisUrl(),'/') . '/api/rest/issues/' . $number);
+            $response = $this->getDefaultClient()->get(
+                rtrim($this->config->getMantisUrl(), '/') . '/api/rest/issues/' . $number
+            );
             $result = json_decode($response->getBody(), true);
         } catch (\Exception $e) {
             return null;
@@ -38,8 +40,12 @@ class MantisConnector
             $result['issues'][0]['description'],
             $result['issues'][0]['project']['name'],
             $result['issues'][0]['status']['name'],
+            $result['issues'][0]['resolution']['name'],
+            $result['issues'][0]['handler']['real_name'] ?? $result['issues'][0]['handler']['name'] ?? null,
             $this->config->getMantisUrl() . '/view.php?id=' . $result['issues'][0]['id'],
-            null, null, null
+            null,
+            null,
+            null,
         );
         $this->updateUpstreamFieldsIssue($result['issues'][0], $issue);
 
@@ -49,18 +55,23 @@ class MantisConnector
     public function patchUpstreamField(MantisIssue $issue)
     {
         $jsonEncode = json_encode([
-                                      'custom_fields' => [[
-                                          'field' => [
-                                              'id' => $issue->getUpstreamTicketFieldId(),
-                                              'name' => $issue->getUpstreamTicketFieldName()
-                                          ],
-                                          'value' => $issue->getUpstreamTicket()
-                                      ]]
-                                  ]);
-
-        $response = $this->getDefaultClient()->patch($this->config->getMantisUrl() . '/api/rest/issues/' . $issue->getId(), [
-            'body' => $jsonEncode
+            'custom_fields' => [
+                [
+                    'field' => [
+                        'id' => $issue->getUpstreamTicketFieldId(),
+                        'name' => $issue->getUpstreamTicketFieldName()
+                    ],
+                    'value' => $issue->getUpstreamTicket()
+                ]
+            ]
         ]);
+
+        $response = $this->getDefaultClient()->patch(
+            $this->config->getMantisUrl() . '/api/rest/issues/' . $issue->getId(),
+            [
+                'body' => $jsonEncode
+            ]
+        );
     }
 
     private function updateUpstreamFieldsIssue(array $issue, MantisIssue $mantisIssue): void
@@ -77,11 +88,11 @@ class MantisConnector
     private function getDefaultClient(): Client
     {
         return new Client([
-          'headers' => [
-              'Authorization' => $this->config->getMantisToken(),
-              'Content-Type' => 'application/json'
-          ]
-      ]);
+            'headers' => [
+                'Authorization' => $this->config->getMantisToken(),
+                'Content-Type' => 'application/json'
+            ]
+        ]);
     }
 
 }

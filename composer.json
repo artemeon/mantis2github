@@ -1,8 +1,11 @@
 {
   "name": "artemeon/mantis2github",
-  "license": "MIT",
+  "description": "A small CLI tool to create a GitHub issue out of a Mantis issue.",
   "type": "library",
-  "description": "",
+  "license": "MIT",
+  "bin": [
+    "mantis2github"
+  ],
   "authors": [
     {
       "name": "Stefan Idler",
@@ -14,19 +17,12 @@
       "Artemeon\\M2G\\": "src/"
     }
   },
-  "autoload-dev": {
-    "psr-4": {
-      "Artemeon\\M2G\\Tests\\": "tests/"
-    }
-  },
   "require": {
     "php": ">=7.4",
     "ext-json": "*",
     "guzzlehttp/guzzle": "^7.3.0",
     "symfony/console": "^5.0",
-    "symfony/yaml": "^5.0"
-  },
-  "scripts": {
-    "mantis2github": "Artemeon\\M2G\\Command\\Sync2Github::run"
+    "symfony/yaml": "^5.0",
+    "nunomaduro/termwind": "^1.5"
   }
 }

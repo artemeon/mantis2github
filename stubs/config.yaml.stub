@@ -1,12 +1,9 @@
-
-# copy to config.yaml
-
 # URL of the mantis system, e.g. https://tickets.company.tld
-MANTIS_URL:
+MANTIS_URL: {{mantisUrl}}
 # user token as created within mantis
-MANTIS_TOKEN:
+MANTIS_TOKEN: {{mantisToken}}
 
 # github personal access token
-GITHUB_TOKEN:
+GITHUB_TOKEN: {{githubToken}}
 # target repo where issues will be created, e.g. user/reponame
-GITHUB_REPOSITORY:
+GITHUB_REPOSITORY: {{githubRepository}}

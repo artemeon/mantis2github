@@ -17,6 +17,8 @@ class MantisIssue
     private string $description;
     private string $project;
     private string $status;
+    private string $resolution;
+    private ?string $assignee;
     private ?string $upstreamTicket;
     private ?int $upstreamTicketFieldId;
     private ?string $upstreamTicketFieldName;
@@ -28,6 +30,8 @@ class MantisIssue
         string $description,
         string $project,
         string $status,
+        string $resolution,
+        ?string $assignee,
         ?string $issueUrl,
         ?string $upstreamTicket,
         ?int $upstreamTicketFieldId,
@@ -39,6 +43,8 @@ class MantisIssue
         $this->description = $description;
         $this->project = $project;
         $this->status = $status;
+        $this->resolution = $resolution;
+        $this->assignee = $assignee;
         $this->upstreamTicket = $upstreamTicket;
         $this->issueUrl = $issueUrl;
         $this->upstreamTicketFieldId = $upstreamTicketFieldId;
@@ -68,6 +74,16 @@ class MantisIssue
     public function getStatus(): string
     {
         return $this->status;
+    }
+
+    public function getResolution(): string
+    {
+        return $this->resolution;
+    }
+
+    public function getAssignee(): ?string
+    {
+        return $this->assignee;
     }
 
     public function getUpstreamTicket(): ?string
@@ -104,7 +120,4 @@ class MantisIssue
     {
         $this->upstreamTicketFieldName = $upstreamTicketFieldName;
     }
-
-
-
 }

@@ -10,14 +10,11 @@
 
 namespace Artemeon\M2G\Command;
 
-use Artemeon\M2G\Service\GithubConnector;
+use Artemeon\M2G\Dto\MantisIssue;
 use Artemeon\M2G\Service\MantisConnector;
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Helper\QuestionHelper;
-use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\Question;
+use Symfony\Component\Console\Input\InputArgument;
+
+use function Termwind\{render, terminal};
 
 class ReadMantisIssueCommand extends Command
 {
@@ -29,35 +26,96 @@ class ReadMantisIssueCommand extends Command
         $this->mantisConnector = $mantisConnector;
     }
 
-
     protected function configure()
     {
-        $this->setName('mantis-read');
-        $this->setDescription('read details of a mantis issue');
+        $this->setName('read:mantis')
+            ->setDescription('Read details of a Mantis issue')
+            ->addArgument('id', InputArgument::OPTIONAL, 'The issue id');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function header(): void
     {
-        $output->writeln('Mantis Details');
-        $question = new Question('Mantis ID: ');
-        /** @var QuestionHelper $helper */
-        $helper = $this->getHelper('question');
-        $id = $helper->ask($input, $output, $question);
+        render(<<<HTML
+<div class="my-1 mx-1 px-2 bg-green-500 text-gray-900 font-bold">
+    Mantis Issue Details
+</div>
+HTML);
+    }
 
-        if (!is_numeric($id)) {
-            $output->writeln('<error>Provide issue id</error>');
+    protected function handle(): int
+    {
+        $this->header();
+
+        $issue = $this->askForIssue();
+
+        terminal()->clear();
+
+        if ($issue->getResolution() === 'open') {
+            render(<<<HTML
+<div class="my-1 mx-1 px-1 bg-green-500 text-gray-900">
+    Issue is open
+</div>
+HTML);
+        } else if ($issue->getResolution() === 'fixed') {
+            render(
+                <<<HTML
+<div class="my-1 mx-1 px-1 bg-purple-500 text-gray-900">
+    Issue is fixed
+</div>
+HTML
+            );
         }
 
-        $issue = $this->mantisConnector->readIssue((int)$id);
+        render(<<<HTML
+<div class="ml-1 font-bold">
+    [{$issue->getProject()}] {$issue->getSummary()}
+</div>
+HTML);
+        $this->info("\n {$issue->getIssueUrl()}");
 
-        $table = new Table($output);
-        $table->addRow(['ID', $issue->getId()]);
-        $table->addRow(['Summary', $issue->getSummary()]);
-        $table->addRow(['GitHub Issue URL', $issue->getUpstreamTicket()]);
-        $table->render();
+        if ($issue->getUpstreamTicket()) {
+            $this->info("\n GitHub issue URL:");
+            $this->info(" {$issue->getUpstreamTicket()}");
+        }
+
+        if ($issue->getAssignee()) {
+            $this->info("\n Assignee:");
+            $this->info(" {$issue->getAssignee()}");
+        }
+
+        $this->info('');
 
         return 0;
     }
 
+    protected function askForIssue(): ?MantisIssue
+    {
+        $id = $this->argument('id') ?? $this->ask(' Mantis Issue ID:');
 
+        if (!is_numeric($id)) {
+            $this->error('Please provide a valid issue id.');
+
+            if (empty($this->argument('id'))) {
+                $this->askForIssue();
+            }
+
+            exit(1);
+        }
+
+        $this->info("\n Fetching issue details...\n");
+
+        $issue = $this->mantisConnector->readIssue((int)$id);
+
+        if (!$issue) {
+            $this->error('Issue not found.');
+
+            if (empty($this->argument('id'))) {
+                $this->askForIssue();
+            }
+
+            exit(1);
+        }
+
+        return $issue;
+    }
 }
