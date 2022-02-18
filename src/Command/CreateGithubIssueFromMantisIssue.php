@@ -77,6 +77,16 @@ HTML
         foreach ($ids as $id) {
             $mantisIssue = $this->mantisConnector->readIssue((int)$id);
 
+            if (empty($mantisIssue)) {
+                $issues[] = [
+                    'id' => $id,
+                    'icon' => '<error>✕</error>',
+                    'message' => '<error>Mantis issue not found.</error>',
+                    'issue' => '',
+                ];
+                continue;
+            }
+
             if (!empty($mantisIssue->getUpstreamTicket())) {
                 $issues[] = [
                     'id' => $id,
