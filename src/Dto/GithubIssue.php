@@ -1,55 +1,29 @@
 <?php
-/*
- * This file is part of the Artemeon Core - Web Application Framework.
- *
- * (c) Artemeon <www.artemeon.de>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
 namespace Artemeon\M2G\Dto;
 
+use JetBrains\PhpStorm\Pure;
+
 class GithubIssue
 {
-    private ?int $id;
-    private ?int $number;
-    private string $title;
-    private string $description;
-    private string $issueUrl;
-    private string $state;
-    private array $assignees;
-    private array $labels;
-
     public function __construct(
-        ?int $id,
-        ?int $number,
-        string $summary,
-        string $description,
-        string $issueUrl,
-        string $state = 'open',
-        array $assignees = [],
-        array $labels = []
+        private ?int $id = null,
+        private ?int $number = null,
+        private ?string $title = null,
+        private ?string $description = null,
+        private ?string $issueUrl = null,
+        private string $state = 'open',
+        private array $assignees = [],
+        private array $labels = [],
     ) {
-        $this->id = $id;
-        $this->title = $summary;
-        $this->description = $description;
-        $this->number = $number;
-        $this->issueUrl = $issueUrl;
-        $this->state = $state;
-        $this->assignees = $assignees;
-        $this->labels = $labels;
     }
 
+    #[Pure]
     public static function fromMantisIssue(MantisIssue $issue): GithubIssue
     {
         return new self(
-            null,
-            null,
-            $issue->getSummary(),
-            $issue->getIssueUrl() . PHP_EOL . PHP_EOL . $issue->getDescription(),
-            '',
-            '',
+            title: $issue->getSummary(),
+            description: $issue->getIssueUrl() . PHP_EOL . PHP_EOL . $issue->getDescription(),
         );
     }
 
@@ -58,22 +32,22 @@ class GithubIssue
         return $this->id;
     }
 
-    public function getTitle(): string
-    {
-        return $this->title;
-    }
-
-    public function getDescription(): string
-    {
-        return $this->description;
-    }
-
     public function getNumber(): ?int
     {
         return $this->number;
     }
 
-    public function getIssueUrl(): string
+    public function getTitle(): ?string
+    {
+        return $this->title;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function getIssueUrl(): ?string
     {
         return $this->issueUrl;
     }
@@ -97,6 +71,6 @@ class GithubIssue
 
     public function getLabels(): array
     {
-        return $this->labels;
+        return $this->labels ?? [];
     }
 }

@@ -1,4 +1,4 @@
-# Mantis 2 Github Connector
+# Mantis 2 GitHub Connector
 
 [![Packagist Version](https://img.shields.io/packagist/v/artemeon/mantis2github)](https://packagist.org/packages/artemeon/mantis2github)
 [![Packagist Downloads](https://img.shields.io/packagist/dt/artemeon/mantis2github)](https://packagist.org/packages/artemeon/mantis2github)
@@ -78,25 +78,25 @@ mantis2github sync 123 456 789
 Read details of a GitHub issue.
 
 ```shell
-mantis2github read:github [id]
+mantis2github read:github <id>
 ```
 
 ##### Arguments
 
 | Argument | required | Description     |
 |----------|----------|-----------------|
-| `id`     | `false`  | GitHub issue id |
+| `id`     | `true`   | GitHub issue id |
 
 #### `read:mantis`
 
 Read details of a Mantis issue.
 
 ```shell
-mantis2github read:mantis [id]
+mantis2github read:mantis <id>
 ```
 
 ##### Arguments
 
 | Argument | required | Description     |
 |----------|----------|-----------------|
-| `id`     | `false`  | Mantis issue id |
+| `id`     | `true`   | Mantis issue id |

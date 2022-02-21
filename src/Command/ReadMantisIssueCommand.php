@@ -1,12 +1,4 @@
 <?php
-/*
- * This file is part of the Artemeon Core - Web Application Framework.
- *
- * (c) Artemeon <www.artemeon.de>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
 namespace Artemeon\M2G\Command;
 
@@ -30,7 +22,7 @@ class ReadMantisIssueCommand extends Command
     {
         $this->setName('read:mantis')
             ->setDescription('Read details of a Mantis issue')
-            ->addArgument('id', InputArgument::OPTIONAL, 'The issue id');
+            ->addArgument('id', InputArgument::REQUIRED, 'The issue id');
     }
 
     protected function header(): void
@@ -46,21 +38,21 @@ HTML);
     {
         $this->header();
 
-        $issue = $this->askForIssue();
+        $issue = $this->fetchIssueDetails();
 
         terminal()->clear();
 
-        if ($issue->getResolution() === 'open') {
+        if (in_array($issue->getResolution(), ['open', 'reopened'])) {
             render(<<<HTML
 <div class="my-1 mx-1 px-1 bg-green-500 text-gray-900">
-    Issue is open
+    Issue is {$issue->getResolution()}
 </div>
 HTML);
-        } else if ($issue->getResolution() === 'fixed') {
+        } else {
             render(
                 <<<HTML
 <div class="my-1 mx-1 px-1 bg-purple-500 text-gray-900">
-    Issue is fixed
+    Issue is {$issue->getResolution()}
 </div>
 HTML
             );
@@ -88,16 +80,12 @@ HTML);
         return 0;
     }
 
-    protected function askForIssue(): ?MantisIssue
+    protected function fetchIssueDetails(): ?MantisIssue
     {
-        $id = $this->argument('id') ?? $this->ask(' Mantis Issue ID:');
+        $id = $this->argument('id');
 
         if (!is_numeric($id)) {
             $this->error('Please provide a valid issue id.');
-
-            if (empty($this->argument('id'))) {
-                $this->askForIssue();
-            }
 
             exit(1);
         }
@@ -108,10 +96,6 @@ HTML);
 
         if (!$issue) {
             $this->error('Issue not found.');
-
-            if (empty($this->argument('id'))) {
-                $this->askForIssue();
-            }
 
             exit(1);
         }

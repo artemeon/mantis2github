@@ -1,24 +1,13 @@
 <?php
-/*
- * This file is part of the Artemeon Core - Web Application Framework.
- *
- * (c) Artemeon <www.artemeon.de>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
 namespace Artemeon\M2G\Command;
 
 use Artemeon\M2G\Dto\GithubIssue;
-use Artemeon\M2G\Dto\MantisIssue;
 use Artemeon\M2G\Service\GithubConnector;
 use Artemeon\M2G\Service\MantisConnector;
-use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Input\InputOption;
 
 use function Termwind\render;
 
@@ -33,7 +22,6 @@ class CreateGithubIssueFromMantisIssue extends Command
         $this->mantisConnector = $mantisConnector;
         $this->githubConnector = $githubConnector;
     }
-
 
     protected function configure()
     {
@@ -99,15 +87,14 @@ HTML
 
             $newGithubIssue = GithubIssue::fromMantisIssue($mantisIssue);
 
-            $filteredLabels = array_filter($labels, function ($label) use ($mantisIssue) {
+            $filteredLabels = array_values(array_filter($labels, function ($label) use ($mantisIssue) {
                 return strtolower($label) === strtolower($mantisIssue->getProject());
-            });
+            }));
 
             $newGithubIssue->setLabels($filteredLabels);
+            $newGithubIssue = $this->githubConnector->createIssue($newGithubIssue);
 
-            try {
-                $newGithubIssue = $this->githubConnector->createIssue($newGithubIssue);
-            } catch (GuzzleException | \Exception $e) {
+            if ($newGithubIssue === null) {
                 $issues[] = [
                     'id' => $id,
                     'icon' => '<error>✕</error>',
@@ -118,7 +105,17 @@ HTML
             }
 
             $mantisIssue->setUpstreamTicket($newGithubIssue->getIssueUrl());
-            $this->mantisConnector->patchUpstreamField($mantisIssue);
+            $patched = $this->mantisConnector->patchUpstreamField($mantisIssue);
+
+            if ($patched === false) {
+                $issues[] = [
+                    'id' => $id,
+                    'icon' => '<error>✕</error>',
+                    'message' => '<error>Upstream ticket URL could not be updated.</error>',
+                    'issue' => '',
+                ];
+                continue;
+            }
 
             $issues[] = [
                 'id' => $id,

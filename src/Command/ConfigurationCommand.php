@@ -3,7 +3,6 @@
 namespace Artemeon\M2G\Command;
 
 use Artemeon\M2G\Config\ConfigReader;
-use Artemeon\M2G\Service\GithubConnector;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Yaml\Yaml;
 
@@ -13,17 +12,6 @@ class ConfigurationCommand extends Command
 {
     protected string $configPath = __DIR__ . '/../../../config.yaml';
     protected array $config = [];
-
-    private GithubConnector $githubConnector;
-
-    /**
-     * @param GithubConnector $mantisConnector
-     */
-    public function __construct(GithubConnector $mantisConnector)
-    {
-        parent::__construct();
-        $this->githubConnector = $mantisConnector;
-    }
 
     protected function configure()
     {
