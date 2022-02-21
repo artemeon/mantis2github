@@ -1,12 +1,4 @@
 <?php
-/*
- * This file is part of the Artemeon Core - Web Application Framework.
- *
- * (c) Artemeon <www.artemeon.de>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
 namespace Artemeon\M2G\Command;
 
@@ -32,7 +24,7 @@ class ReadGithubIssueCommand extends Command
     protected function configure()
     {
         $this->setName('read:github')
-            ->addArgument('id', InputArgument::OPTIONAL, 'GitHub issue id')
+            ->addArgument('id', InputArgument::REQUIRED, 'GitHub issue id')
             ->setDescription('Read details of a GitHub issue');
     }
 
@@ -49,7 +41,7 @@ HTML);
     {
         $this->header();
 
-        $issue = $this->askForIssue();
+        $issue = $this->fetchIssueDetails();
 
         terminal()->clear();
 
@@ -112,16 +104,12 @@ HTML);
         return 0;
     }
 
-    protected function askForIssue(): GithubIssue
+    protected function fetchIssueDetails(): GithubIssue
     {
-        $id = $this->argument('id') ?? $this->ask(' GitHub Issue ID:');
+        $id = $this->argument('id');
 
         if (!is_numeric($id)) {
             $this->error('Please provide a valid issue id.');
-
-            if (empty($this->argument('id'))) {
-                $this->askForIssue();
-            }
 
             exit(1);
         }
@@ -134,7 +122,7 @@ HTML);
             $this->error('Issue not found.');
 
             if (empty($this->argument('id'))) {
-                $this->askForIssue();
+                $this->fetchIssueDetails();
             }
 
             exit(1);

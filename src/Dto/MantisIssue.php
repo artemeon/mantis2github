@@ -1,54 +1,22 @@
 <?php
-/*
- * This file is part of the Artemeon Core - Web Application Framework.
- *
- * (c) Artemeon <www.artemeon.de>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
 namespace Artemeon\M2G\Dto;
 
 class MantisIssue
 {
-    private int $id;
-    private string $summary;
-    private string $description;
-    private string $project;
-    private string $status;
-    private string $resolution;
-    private ?string $assignee;
-    private ?string $upstreamTicket;
-    private ?int $upstreamTicketFieldId;
-    private ?string $upstreamTicketFieldName;
-    private ?string $issueUrl;
-
     public function __construct(
-        int $id,
-        string $summary,
-        string $description,
-        string $project,
-        string $status,
-        string $resolution,
-        ?string $assignee,
-        ?string $issueUrl,
-        ?string $upstreamTicket,
-        ?int $upstreamTicketFieldId,
-        ?string $upstreamTicketFieldName
-    )
-    {
-        $this->id = $id;
-        $this->summary = $summary;
-        $this->description = $description;
-        $this->project = $project;
-        $this->status = $status;
-        $this->resolution = $resolution;
-        $this->assignee = $assignee;
-        $this->upstreamTicket = $upstreamTicket;
-        $this->issueUrl = $issueUrl;
-        $this->upstreamTicketFieldId = $upstreamTicketFieldId;
-        $this->upstreamTicketFieldName = $upstreamTicketFieldName;
+        private int $id,
+        private string $summary,
+        private string $description,
+        private string $project,
+        private string $status,
+        private string $resolution,
+        private ?string $assignee,
+        private ?string $issueUrl,
+        private ?string $upstreamTicket = null,
+        private ?int $upstreamTicketFieldId = null,
+        private ?string $upstreamTicketFieldName = null,
+    ) {
     }
 
     public function getId(): int

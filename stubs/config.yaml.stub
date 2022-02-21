@@ -5,5 +5,5 @@ MANTIS_TOKEN: {{mantisToken}}
 
 # github personal access token
 GITHUB_TOKEN: {{githubToken}}
-# target repo where issues will be created, e.g. user/reponame
+# target repo where issues will be created, e.g. user/repo-name
 GITHUB_REPOSITORY: {{githubRepository}}

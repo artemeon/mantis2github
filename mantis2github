@@ -1,13 +1,14 @@
 #!/usr/bin/env php
 <?php
-/*
- * This file is part of the Artemeon Core - Web Application Framework.
- *
- * (c) Artemeon <www.artemeon.de>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
+
+use Artemeon\M2G\Command\ConfigurationCommand;
+use Artemeon\M2G\Command\CreateGithubIssueFromMantisIssue;
+use Artemeon\M2G\Command\ReadGithubIssueCommand;
+use Artemeon\M2G\Command\ReadMantisIssueCommand;
+use Artemeon\M2G\Config\ConfigReader;
+use Artemeon\M2G\Service\GithubConnector;
+use Artemeon\M2G\Service\MantisConnector;
+use Symfony\Component\Console\Application;
 
 (new class() {
     protected string $name;
@@ -18,15 +19,15 @@
         $this->autoload();
         $this->fetchVersion();
 
-        $configValues = (new \Artemeon\M2G\Config\ConfigReader())->read();
-        $githubConnector = new \Artemeon\M2G\Service\GithubConnector($configValues);
-        $mantisConnector = new \Artemeon\M2G\Service\MantisConnector($configValues);
+        $configValues = (new ConfigReader())->read();
+        $githubConnector = new GithubConnector($configValues);
+        $mantisConnector = new MantisConnector($configValues);
 
-        $app = new \Symfony\Component\Console\Application($this->name, $this->version);
-        $app->add(new \Artemeon\M2G\Command\ConfigurationCommand($githubConnector));
-        $app->add(new \Artemeon\M2G\Command\ReadMantisIssueCommand($mantisConnector));
-        $app->add(new \Artemeon\M2G\Command\ReadGithubIssueCommand($githubConnector));
-        $app->add(new \Artemeon\M2G\Command\CreateGithubIssueFromMantisIssue($mantisConnector, $githubConnector));
+        $app = new Application($this->name, $this->version);
+        $app->add(new ConfigurationCommand());
+        $app->add(new ReadMantisIssueCommand($mantisConnector));
+        $app->add(new ReadGithubIssueCommand($githubConnector));
+        $app->add(new CreateGithubIssueFromMantisIssue($mantisConnector, $githubConnector));
         $app->run();
     }
 

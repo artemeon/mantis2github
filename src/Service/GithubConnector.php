@@ -1,12 +1,4 @@
 <?php
-/*
- * This file is part of the Artemeon Core - Web Application Framework.
- *
- * (c) Artemeon <www.artemeon.de>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
 
 namespace Artemeon\M2G\Service;
 
@@ -18,88 +10,82 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class GithubConnector
 {
-    private ?ConfigValues $config;
+    private Client $client;
 
-    public function __construct(?ConfigValues $config)
+    public function __construct(private ?ConfigValues $config)
     {
-        $this->config = $config;
+        $this->client = new Client([
+            'headers' => [
+                'Accept' => 'application/vnd.github.v3+json',
+                'Authorization' => 'token ' . $this->config->getGithubToken(),
+            ],
+            'base_uri' => 'https://api.github.com/repos/' . $config->getGithubRepo() . '/',
+        ]);
     }
 
     public function readIssue(int $number): ?GithubIssue
     {
         try {
-            $response = $this->getDefaultClient()->get(
-                '/repos/' . $this->config->getGithubRepo() . '/issues/' . $number
+            $response = $this->client->get(
+                'issues/' . $number,
             );
             $result = json_decode($response->getBody(), true);
-        } catch (GuzzleException | Exception $e) {
+        } catch (GuzzleException | Exception) {
             return null;
         }
 
         return new GithubIssue(
-            $result['id'],
-            $result['number'],
-            $result['title'],
-            $result['body'] ?? '',
-            $result['html_url'],
-            $result['state'],
-            $result['assignees'],
-            $result['labels'],
+            id: $result['id'],
+            number: $result['number'],
+            title: $result['title'],
+            description: $result['body'] ?? '',
+            issueUrl: $result['html_url'],
+            state: $result['state'],
+            assignees: $result['assignees'],
+            labels: $result['labels'],
         );
     }
 
-    /**
-     * @throws GuzzleException
-     */
-    public function createIssue(GithubIssue $issue): GithubIssue
+    public function createIssue(GithubIssue $issue): ?GithubIssue
     {
-        $response = $this->getDefaultClient()->post(
-            '/repos/' . $this->config->getGithubRepo() . '/issues',
-            [
-                'body' => json_encode([
-                    'title' => $issue->getTitle(),
-                    'body' => $issue->getDescription(),
-                    'labels' => $issue->getLabels(),
-                ]),
-            ],
-        );
+        try {
+            $response = $this->client->post(
+                'issues',
+                [
+                    'body' => json_encode([
+                        'title' => $issue->getTitle(),
+                        'body' => $issue->getDescription(),
+                        'labels' => $issue->getLabels(),
+                    ]),
+                ],
+            );
+        } catch (GuzzleException | Exception) {
+            return null;
+        }
 
         $result = json_decode($response->getBody(), true);
 
         return new GithubIssue(
-            $result['id'],
-            $result['number'],
-            $result['title'],
-            $result['body'],
-            $result['html_url'],
-            $result['state'],
-            $result['assignees'],
-            $result['labels'],
+            id: $result['id'],
+            number: $result['number'],
+            title: $result['title'],
+            description: $result['body'],
+            issueUrl: $result['html_url'],
+            state: $result['state'],
+            assignees: $result['assignees'],
+            labels: $result['labels'],
         );
     }
 
     public function getLabels(): array
     {
         try {
-            $response = $this->getDefaultClient()->get(
-                '/repos/' . $this->config->getGithubRepo() . '/labels',
-            );
+            $response = $this->client->get('labels');
             $result = json_decode($response->getBody(), true);
-        } catch (GuzzleException | Exception $e) {
+        } catch (GuzzleException | Exception) {
             return [];
         }
 
-        return $result;
-    }
-
-    private function getDefaultClient(): Client
-    {
-        return new Client([
-            'base_uri' => 'https://api.github.com/',
-            'headers' => [
-                'Authorization' => 'token ' . $this->config->getGithubToken(),
-                'accept' => 'application/vnd.github.v3+json',
-            ],
-        ]);
+        return $result ?: [];
     }
 }
