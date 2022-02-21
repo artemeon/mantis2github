@@ -14,6 +14,9 @@ class GithubConnector
 
     public function __construct(private ?ConfigValues $config)
     {
+        if (!$config) {
+            return;
+        }
         $this->client = new Client([
             'headers' => [
                 'Accept' => 'application/vnd.github.v3+json',

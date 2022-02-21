@@ -14,6 +14,9 @@ class MantisConnector
 
     public function __construct(private ?ConfigValues $config)
     {
+        if (!$config) {
+            return;
+        }
         $this->client = new Client([
             'headers' => [
                 'Authorization' => $this->config->getMantisToken(),
