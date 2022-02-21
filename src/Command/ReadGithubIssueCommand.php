@@ -39,6 +39,8 @@ HTML);
 
     protected function handle(): int
     {
+        $this->checkConfig();
+
         $this->header();
 
         $issue = $this->fetchIssueDetails();
