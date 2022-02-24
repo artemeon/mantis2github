@@ -66,7 +66,7 @@ class MantisConnector
 
         try {
             $this->client->patch(
-                $issue->getId(),
+                (string) $issue->getId(),
                 [
                     'body' => $body,
                 ],
