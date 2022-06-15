@@ -10,6 +10,10 @@
     {
       "name": "Stefan Idler",
       "email": "stefan.idler@artemeon.de"
+    },
+    {
+      "name": "Marc Reichel",
+      "email": "marc.reichel@artemeon.de"
     }
   ],
   "autoload": {
