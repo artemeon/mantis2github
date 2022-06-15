@@ -35,6 +35,11 @@ class MantisConnector
             return null;
         }
 
+        $mantisBaseUrl = $this->config->getMantisUrl();
+        if (!str_ends_with($mantisBaseUrl, '/')) {
+            $mantisBaseUrl .= '/';
+        }
+
         $issue = new MantisIssue(
             id: $result['issues'][0]['id'],
             summary: $result['issues'][0]['summary'],
@@ -43,7 +48,7 @@ class MantisConnector
             status: $result['issues'][0]['status']['name'],
             resolution: $result['issues'][0]['resolution']['name'],
             assignee: $result['issues'][0]['handler']['real_name'] ?? $result['issues'][0]['handler']['name'] ?? null,
-            issueUrl: $this->config->getMantisUrl() . '/view.php?id=' . $result['issues'][0]['id'],
+            issueUrl: $mantisBaseUrl . 'view.php?id=' . $result['issues'][0]['id'],
         );
         $this->updateUpstreamFieldsIssue($result['issues'][0], $issue);
 
