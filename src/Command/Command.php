@@ -3,6 +3,8 @@
 namespace Artemeon\M2G\Command;
 
 use Artemeon\M2G\Config\ConfigReader;
+use Artemeon\M2G\Helper\VersionHelper;
+use Exception;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -15,12 +17,39 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
     protected InputInterface $input;
     protected OutputInterface $output;
 
+    /**
+     * @throws Exception
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->input = $input;
         $this->output = $output;
 
-        return $this->handle();
+        $commandOutput = $this->handle();
+
+        $currentVersion = VersionHelper::fetchVersion();
+        $latestVersion = VersionHelper::latestVersion();
+        $updateAvailable = VersionHelper::checkForUpdates();
+        $name = VersionHelper::getPackageName();
+
+        if (!$updateAvailable) {
+            render(<<<HTML
+<table>
+    <thead>
+        <tr>
+            <th>Update available! $currentVersion -> $latestVersion</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><br>Please run:<br><br><code class="font-bold">composer global update $name</code><br></td>
+        </tr>
+    </tbody>
+</table>
+HTML);
+        }
+
+        return $commandOutput;
     }
 
     protected function arguments(): array

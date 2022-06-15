@@ -6,6 +6,7 @@ use Artemeon\M2G\Command\CreateGithubIssueFromMantisIssue;
 use Artemeon\M2G\Command\ReadGithubIssueCommand;
 use Artemeon\M2G\Command\ReadMantisIssueCommand;
 use Artemeon\M2G\Config\ConfigReader;
+use Artemeon\M2G\Helper\VersionHelper;
 use Artemeon\M2G\Service\GithubConnector;
 use Artemeon\M2G\Service\MantisConnector;
 use Symfony\Component\Console\Application;
@@ -65,26 +66,6 @@ use Symfony\Component\Console\Application;
         $name = $packageJson['name'] ?? null;
         $this->name = explode('/', $name)[1] ?? null;
 
-        foreach (
-            [
-                __DIR__ . '/../../composer/installed.php',
-                __DIR__ . '/../vendor/composer/installed.php',
-                __DIR__ . '/vendor/composer/installed.php'
-            ] as $file
-        ) {
-            if (file_exists($file)) {
-                $installed = require $file;
-                $this->version = $installed['versions'][$name]['pretty_version'] ?? null;
-
-                break;
-            }
-        }
-
-        unset($file, $installed);
+        $this->version = VersionHelper::fetchVersion();
     }
 })->main();
-
-
-
-
-

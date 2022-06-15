@@ -4,8 +4,63 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6526f46a258ecba9d64af1ccf85c7838",
+    "content-hash": "edf3b983a0fb8b3a691d773fc7e24ede",
     "packages": [
+        {
+            "name": "ahinkle/packagist-latest-version",
+            "version": "2.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ahinkle/packagist-latest-version.git",
+                "reference": "18b7edb97665b5016973c2a56e95326057d98917"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ahinkle/packagist-latest-version/zipball/18b7edb97665b5016973c2a56e95326057d98917",
+                "reference": "18b7edb97665b5016973c2a56e95326057d98917",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.0",
+                "spatie/packagist-api": "^2.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^9.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "ahinkle\\PackagistLatestVersion\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Andy Hinkle",
+                    "email": "ahinkle10@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Obtains the latest version release of Composer Packages from the Packagist API",
+            "homepage": "https://github.com/ahinkle/packagist-latest-version",
+            "keywords": [
+                "ahinkle",
+                "composer",
+                "latest",
+                "packagist",
+                "packagist-api",
+                "packagist-latest-version",
+                "version"
+            ],
+            "support": {
+                "issues": "https://github.com/ahinkle/packagist-latest-version/issues",
+                "source": "https://github.com/ahinkle/packagist-latest-version/tree/2.0.0"
+            },
+            "time": "2021-12-22T16:36:11+00:00"
+        },
         {
             "name": "guzzlehttp/guzzle",
             "version": "7.4.1",
@@ -671,6 +726,76 @@
                 "source": "https://github.com/ralouphie/getallheaders/tree/develop"
             },
             "time": "2019-03-08T08:55:37+00:00"
+        },
+        {
+            "name": "spatie/packagist-api",
+            "version": "2.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/spatie/packagist-api.git",
+                "reference": "3348caf7975d052b22124e246daa3e2a3802a802"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/spatie/packagist-api/zipball/3348caf7975d052b22124e246daa3e2a3802a802",
+                "reference": "3348caf7975d052b22124e246daa3e2a3802a802",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "guzzlehttp/guzzle": "^6.5|^7.0",
+                "php": "^7.2|^8.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^8.5|^9.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Spatie\\Packagist\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Freek Van der Herten",
+                    "email": "freek@spatie.be",
+                    "homepage": "https://spatie.be",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Jolita Grazyte",
+                    "email": "jolita@spatie.be",
+                    "homepage": "https://spatie.be",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Mark Walet",
+                    "homepage": "https://markwalet.me",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Fetch package info from Packagist",
+            "homepage": "https://github.com/spatie/packagist-api",
+            "keywords": [
+                "api",
+                "packagist",
+                "spatie"
+            ],
+            "support": {
+                "issues": "https://github.com/spatie/packagist-api/issues",
+                "source": "https://github.com/spatie/packagist-api/tree/2.0.2"
+            },
+            "funding": [
+                {
+                    "url": "https://spatie.be/open-source/support-us",
+                    "type": "custom"
+                }
+            ],
+            "time": "2020-12-01T14:09:20+00:00"
         },
         {
             "name": "symfony/console",
@@ -1585,5 +1710,5 @@
         "composer-runtime-api": "^2.2.2"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.2.0"
+    "plugin-api-version": "2.3.0"
 }
