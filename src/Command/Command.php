@@ -32,7 +32,7 @@ abstract class Command extends \Symfony\Component\Console\Command\Command
         $updateAvailable = VersionHelper::checkForUpdates();
         $name = VersionHelper::getPackageName();
 
-        if (!$updateAvailable) {
+        if ($updateAvailable) {
             render(<<<HTML
 <table>
     <thead>
