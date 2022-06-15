@@ -21,9 +21,15 @@ class GithubIssue
     #[Pure]
     public static function fromMantisIssue(MantisIssue $issue): GithubIssue
     {
+        $rows = [
+            '| Mantis Ticket |',
+            '|:-------------:|',
+            '| [MANTIS-' . $issue->getId() . '](' . $issue->getIssueUrl() . ') |',
+        ];
+        $table = implode(PHP_EOL, $rows);
         return new self(
             title: $issue->getSummary(),
-            description: $issue->getIssueUrl() . PHP_EOL . PHP_EOL . $issue->getDescription(),
+            description: $issue->getDescription() . PHP_EOL . PHP_EOL . $table,
         );
     }
 
