@@ -28,7 +28,7 @@ class GithubIssue
         ];
         $table = implode(PHP_EOL, $rows);
         return new self(
-            title: $issue->getSummary(),
+            title: '[' . $issue->getProject() . '] ' . $issue->getSummary(),
             description: $issue->getDescription() . PHP_EOL . PHP_EOL . $table,
         );
     }
