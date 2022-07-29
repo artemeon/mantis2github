@@ -22,6 +22,9 @@ class GithubConnector
                 'Accept' => 'application/vnd.github.v3+json',
                 'Authorization' => 'token ' . $this->config->getGithubToken(),
             ],
+            'defaults' => [
+                'verify' => false,
+            ],
             'base_uri' => 'https://api.github.com/repos/' . $config->getGithubRepo() . '/',
         ]);
     }
