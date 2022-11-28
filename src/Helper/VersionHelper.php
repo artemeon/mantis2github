@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Artemeon\M2G\Helper;
 
 use ahinkle\PackagistLatestVersion\PackagistLatestVersion;
+use Composer\InstalledVersions;
 use Exception;
 
 class VersionHelper
@@ -18,28 +19,7 @@ class VersionHelper
 
     public static function fetchVersion(): string
     {
-        $name = self::getPackageName();
-
-        $version = null;
-
-        foreach (
-            [
-                __DIR__ . '/../../../../composer/installed.php',
-                __DIR__ . '/../../../vendor/composer/installed.php',
-                __DIR__ . '/../../vendor/composer/installed.php'
-            ] as $file
-        ) {
-            if (file_exists($file)) {
-                $installed = require $file;
-                $version = $installed['versions'][$name]['pretty_version'] ?? null;
-
-                break;
-            }
-        }
-
-        unset($file, $installed);
-
-        return $version;
+        return InstalledVersions::getPrettyVersion('artemeon/mantis2github');
     }
 
     /**
