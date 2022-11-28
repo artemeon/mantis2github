@@ -1,6 +1,7 @@
 #!/usr/bin/env php
 <?php
 
+use Artemeon\M2G\Command\CheckUpdateCommand;
 use Artemeon\M2G\Command\ConfigurationCommand;
 use Artemeon\M2G\Command\CreateGithubIssueFromMantisIssue;
 use Artemeon\M2G\Command\ReadGithubIssueCommand;
@@ -29,6 +30,7 @@ use Symfony\Component\Console\Application;
         $app->add(new ReadMantisIssueCommand($mantisConnector));
         $app->add(new ReadGithubIssueCommand($githubConnector));
         $app->add(new CreateGithubIssueFromMantisIssue($mantisConnector, $githubConnector));
+        $app->add(new CheckUpdateCommand());
         $app->run();
     }
 
