@@ -22,9 +22,7 @@ class MantisConnector
                 'Authorization' => $this->config->getMantisToken(),
                 'Content-Type' => 'application/json',
             ],
-            'defaults' => [
-                'verify' => false,
-            ],
+            'verify' => false,
             'base_uri' => rtrim($this->config->getMantisUrl(), '/') . '/api/rest/issues/',
         ]);
     }
