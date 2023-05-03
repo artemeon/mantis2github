@@ -75,16 +75,6 @@ HTML
                 continue;
             }
 
-            if (!empty($mantisIssue->getUpstreamTicket())) {
-                $issues[] = [
-                    'id' => $id,
-                    'icon' => '<comment>!</comment>',
-                    'message' => '<comment>Mantis issue already synchronized.</comment>',
-                    'issue' => $mantisIssue->getUpstreamTicket(),
-                ];
-                continue;
-            }
-
             $newGithubIssue = GithubIssue::fromMantisIssue($mantisIssue);
 
             $filteredLabels = array_values(array_filter($labels, function ($label) use ($mantisIssue) {
@@ -104,7 +94,7 @@ HTML
                 continue;
             }
 
-            $mantisIssue->setUpstreamTicket($newGithubIssue->getIssueUrl());
+            $mantisIssue->setUpstreamTicket(trim($mantisIssue->getUpstreamTicket() . ' ' . $newGithubIssue->getIssueUrl()));
             $patched = $this->mantisConnector->patchUpstreamField($mantisIssue);
 
             if ($patched === false) {
