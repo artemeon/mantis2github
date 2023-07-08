@@ -1,15 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Artemeon\M2G\Command;
 
 use Artemeon\M2G\Dto\GithubIssue;
 use Artemeon\M2G\Service\GithubConnector;
-use Symfony\Component\Console\Input\InputArgument;
 
 use function Termwind\{render, style, terminal};
 
 class ReadGithubIssueCommand extends Command
 {
+    protected string $signature = 'read:github {id : GitHub issue id}';
+    protected ?string $description = 'Read details of a GitHub issue';
+
     private GithubConnector $githubConnector;
 
     /**
@@ -21,27 +25,11 @@ class ReadGithubIssueCommand extends Command
         $this->githubConnector = $mantisConnector;
     }
 
-    protected function configure()
-    {
-        $this->setName('read:github')
-            ->addArgument('id', InputArgument::REQUIRED, 'GitHub issue id')
-            ->setDescription('Read details of a GitHub issue');
-    }
-
-    protected function header(): void
-    {
-        render(<<<HTML
-<div class="my-1 mx-1 px-2 bg-green-500 text-gray-900 font-bold">
-    GitHub Issue Details
-</div>
-HTML);
-    }
-
-    protected function handle(): int
+    public function __invoke(): int
     {
         $this->checkConfig();
 
-        $this->header();
+        $this->title('GitHub Issue Details');
 
         $issue = $this->fetchIssueDetails();
 
@@ -49,14 +37,14 @@ HTML);
 
         if ($issue->getState() === 'open') {
             render(<<<HTML
-<div class="my-1 mx-1 px-1 bg-green-500 text-gray-900">
+<div class="my-1 mx-2 px-1 bg-green-500 text-white font-bold">
     Issue is open
 </div>
 HTML);
         } else if ($issue->getState() === 'closed') {
             render(
                 <<<HTML
-<div class="my-1 mx-1 px-1 bg-purple-500 text-gray-900">
+<div class="my-1 mx-2 px-1 bg-purple-500 text-white font-bold">
     Issue is closed
 </div>
 HTML
@@ -64,21 +52,28 @@ HTML
         }
 
         render(<<<HTML
-<div class="ml-1 font-bold">
+<div class="mx-2 mb-1 font-bold">
     {$issue->getTitle()}
 </div>
 HTML);
-        $this->info("\n {$issue->getIssueUrl()}\n");
+        render(<<<HTML
+<div class="mx-2 mb-1">
+    {$issue->getIssueUrl()}
+</div>
+HTML);
 
-        $assignees = array_map(function ($assignee) {
-            return "<a href=\"{$assignee['html_url']}\" class=\"px-1 bg-blue-500 text-black\">{$assignee['login']}</a>";
-        }, $issue->getAssignees());
+        $assignees = array_map(static fn ($assignee) => "<a href=\"{$assignee['html_url']}\" class=\"px-1 bg-blue-500 text-black\">{$assignee['login']}</a>", $issue->getAssignees());
 
         if (count($assignees)) {
-            $this->info(' Assignee' . (count($assignees) > 1 ? 's' : '') . ':');
+            $text = 'Assignee' . (count($assignees) > 1 ? 's' : '') . ':';
+            render(<<<HTML
+<div class="mx-2 mb-1">
+    {$text}
+</div>
+HTML);
             $assigneesHtml = implode(' ', $assignees);
             render(<<<HTML
-<div class="ml-1 my-1">
+<div class="mx-2 mb-1">
     $assigneesHtml
 </div>
 HTML);
@@ -87,36 +82,41 @@ HTML);
         $labels = $issue->getLabels();
 
         if (count($labels)) {
-            $labels = array_map(function ($label) {
+            $labels = array_map(static function ($label) {
                 style("label-{$label['id']}")->color('#' . $label['color']);
                 return "<span class=\"px-1 bg-label-{$label['id']} text-black\">{$label['name']}</span>";
             }, $labels);
 
-            $this->info(' Label' . (count($labels) > 1 ? 's' : '') . ':');
+            $text = 'Label' . (count($labels) > 1 ? 's' : '') . ':';
+            render(<<<HTML
+<div class="mx-2 mb-1">
+    {$text}
+</div>
+HTML);
 
             $labelsHtml = implode(' ', $labels);
 
             render(<<<HTML
-<div class="m-1">
+<div class="mx-2 mb-1">
     $labelsHtml
 </div>
 HTML);
         }
 
-        return 0;
+        return self::SUCCESS;
     }
 
-    protected function fetchIssueDetails(): GithubIssue
+    private function fetchIssueDetails(): GithubIssue
     {
         $id = $this->argument('id');
 
         if (!is_numeric($id)) {
             $this->error('Please provide a valid issue id.');
 
-            exit(1);
+            exit(self::INVALID);
         }
 
-        $this->info("\n Fetching issue details...\n");
+        $this->info('Fetching issue details...');
 
         $issue = $this->githubConnector->readIssue((int)$id);
 
@@ -127,7 +127,7 @@ HTML);
                 $this->fetchIssueDetails();
             }
 
-            exit(1);
+            exit(self::FAILURE);
         }
 
         return $issue;

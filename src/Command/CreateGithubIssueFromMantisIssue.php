@@ -1,18 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Artemeon\M2G\Command;
 
 use Artemeon\M2G\Dto\GithubIssue;
 use Artemeon\M2G\Service\GithubConnector;
 use Artemeon\M2G\Service\MantisConnector;
+use JsonException;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Input\InputArgument;
-
-use function Termwind\render;
 
 class CreateGithubIssueFromMantisIssue extends Command
 {
+    protected string $signature = 'sync {ids* : Mantis issue ids}';
+
+    protected ?string $description = 'Synchronize a list of Mantis issues to GitHub';
+
     private GithubConnector $githubConnector;
     private MantisConnector $mantisConnector;
 
@@ -23,49 +27,30 @@ class CreateGithubIssueFromMantisIssue extends Command
         $this->githubConnector = $githubConnector;
     }
 
-    protected function configure()
-    {
-        $this->setName('sync')
-            ->setDescription('Synchronize a list of Mantis issues to GitHub')
-            ->addArgument('ids', InputArgument::IS_ARRAY | InputArgument::REQUIRED, 'Mantis issue ids');
-    }
-
-    protected function header(): void
-    {
-        render(
-            <<<HTML
-<div class="my-1 mx-1 px-2 bg-green-500 text-gray-900 font-bold">
-    Mantis 2 GitHub Sync
-</div>
-HTML
-        );
-    }
-
-    protected function handle(): int
+    /**
+     * @throws JsonException
+     */
+    public function __invoke(): int
     {
         $this->checkConfig();
 
-        $this->header();
-
-        $this->success(" Creates a new GitHub issue from a Mantis issue.");
+        $this->title('Mantis 2 GitHub Sync');
 
         $ids = array_unique($this->argument('ids'));
 
-        $this->info('');
+        $this->newLine();
 
         $progressBar = new ProgressBar($this->output, count($ids));
         $progressBar->start();
 
-        $labels = array_map(function ($label) {
-            return $label['name'];
-        }, $this->githubConnector->getLabels());
+        $labels = array_map(static fn ($label) => $label['name'], $this->githubConnector->getLabels());
 
         $issues = [];
 
         foreach ($ids as $id) {
             $mantisIssue = $this->mantisConnector->readIssue((int)$id);
 
-            if (empty($mantisIssue)) {
+            if ($mantisIssue === null) {
                 $issues[] = [
                     'id' => $id,
                     'icon' => '<error>✕</error>',
@@ -77,9 +62,9 @@ HTML
 
             $newGithubIssue = GithubIssue::fromMantisIssue($mantisIssue);
 
-            $filteredLabels = array_values(array_filter($labels, function ($label) use ($mantisIssue) {
-                return strtolower($label) === strtolower($mantisIssue->getProject());
-            }));
+            $filteredLabels = array_values(
+                array_filter($labels, static fn ($label) => strtolower($label) === strtolower($mantisIssue->getProject())),
+            );
 
             $newGithubIssue->setLabels($filteredLabels);
             $newGithubIssue = $this->githubConnector->createIssue($newGithubIssue);
@@ -94,7 +79,9 @@ HTML
                 continue;
             }
 
-            $mantisIssue->setUpstreamTicket(trim($mantisIssue->getUpstreamTicket() . ' ' . $newGithubIssue->getIssueUrl()));
+            $mantisIssue->setUpstreamTicket(
+                trim($mantisIssue->getUpstreamTicket() . ' ' . $newGithubIssue->getIssueUrl())
+            );
             $patched = $this->mantisConnector->patchUpstreamField($mantisIssue);
 
             if ($patched === false) {
@@ -119,17 +106,17 @@ HTML
 
         $progressBar->finish();
 
-        $this->info("\n");
+        $this->newLine();
 
         $table = new Table($this->output);
         $table->setHeaders(['', 'Mantis issue ID', 'Message', 'GitHub Issue']);
-        foreach($issues as $issue) {
+        foreach ($issues as $issue) {
             $table->addRow([$issue['icon'], $issue['id'], $issue['message'], $issue['issue']]);
         }
         $table->render();
 
-        $this->info('');
+        $this->newLine();
 
-        return 0;
+        return self::SUCCESS;
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Artemeon\M2G\Service;
 
 use Artemeon\M2G\Config\ConfigValues;
@@ -7,6 +9,7 @@ use Artemeon\M2G\Dto\GithubIssue;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use JsonException;
 
 class GithubConnector
 {
@@ -27,13 +30,13 @@ class GithubConnector
         ]);
     }
 
-    public function readIssue(int $number): ?GithubIssue
+    final public function readIssue(int $number): ?GithubIssue
     {
         try {
             $response = $this->client->get(
                 'issues/' . $number,
             );
-            $result = json_decode($response->getBody(), true);
+            $result = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         } catch (GuzzleException | Exception) {
             return null;
         }
@@ -50,7 +53,10 @@ class GithubConnector
         );
     }
 
-    public function createIssue(GithubIssue $issue): ?GithubIssue
+    /**
+     * @throws JsonException
+     */
+    final public function createIssue(GithubIssue $issue): ?GithubIssue
     {
         try {
             $response = $this->client->post(
@@ -60,14 +66,14 @@ class GithubConnector
                         'title' => $issue->getTitle(),
                         'body' => $issue->getDescription(),
                         'labels' => $issue->getLabels(),
-                    ]),
+                    ], JSON_THROW_ON_ERROR),
                 ],
             );
         } catch (GuzzleException | Exception) {
             return null;
         }
 
-        $result = json_decode($response->getBody(), true);
+        $result = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
 
         return new GithubIssue(
             id: $result['id'],
@@ -81,11 +87,11 @@ class GithubConnector
         );
     }
 
-    public function getLabels(): array
+    final public function getLabels(): array
     {
         try {
             $response = $this->client->get('labels');
-            $result = json_decode($response->getBody(), true);
+            $result = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         } catch (GuzzleException | Exception) {
             return [];
         }

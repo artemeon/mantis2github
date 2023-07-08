@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Artemeon\M2G\Config;
 
 use Symfony\Component\Yaml\Yaml;
 
 class ConfigReader
 {
-    public function read(): ?ConfigValues
+    final public function read(): ?ConfigValues
     {
         $configFile = __DIR__ . '/../../../config.yaml';
 

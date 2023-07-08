@@ -1,15 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Artemeon\M2G\Command;
 
 use Artemeon\M2G\Dto\MantisIssue;
 use Artemeon\M2G\Service\MantisConnector;
-use Symfony\Component\Console\Input\InputArgument;
 
 use function Termwind\{render, terminal};
 
 class ReadMantisIssueCommand extends Command
 {
+    protected string $signature = 'read:mantis {id : The issue ID}';
+    protected ?string $description = 'Read details of a Mantis issue';
+
     private MantisConnector $mantisConnector;
 
     public function __construct(MantisConnector $mantisConnector)
@@ -18,27 +22,11 @@ class ReadMantisIssueCommand extends Command
         $this->mantisConnector = $mantisConnector;
     }
 
-    protected function configure()
-    {
-        $this->setName('read:mantis')
-            ->setDescription('Read details of a Mantis issue')
-            ->addArgument('id', InputArgument::REQUIRED, 'The issue id');
-    }
-
-    protected function header(): void
-    {
-        render(<<<HTML
-<div class="my-1 mx-1 px-2 bg-green-500 text-gray-900 font-bold">
-    Mantis Issue Details
-</div>
-HTML);
-    }
-
-    protected function handle(): int
+    public function __invoke(): int
     {
         $this->checkConfig();
 
-        $this->header();
+        $this->title('Mantis Issue Details');
 
         $issue = $this->fetchIssueDetails();
 
@@ -46,14 +34,14 @@ HTML);
 
         if (in_array($issue->getResolution(), ['open', 'reopened'])) {
             render(<<<HTML
-<div class="my-1 mx-1 px-1 bg-green-500 text-gray-900">
+<div class="my-1 mx-2 px-1 bg-green-500 text-white font-bold">
     Issue is {$issue->getResolution()}
 </div>
 HTML);
         } else {
             render(
                 <<<HTML
-<div class="my-1 mx-1 px-1 bg-purple-500 text-gray-900">
+<div class="my-1 mx-2 px-1 bg-purple-500 text-white font-bold">
     Issue is {$issue->getResolution()}
 </div>
 HTML
@@ -61,28 +49,46 @@ HTML
         }
 
         render(<<<HTML
-<div class="ml-1 font-bold">
+<div class="mx-2 mb-1 font-bold">
     [{$issue->getProject()}] {$issue->getSummary()}
 </div>
 HTML);
-        $this->info("\n {$issue->getIssueUrl()}");
+        render(<<<HTML
+<div class="mx-2 mb-1">
+    {$issue->getIssueUrl()}
+</div>
+HTML);
 
         if ($issue->getUpstreamTicket()) {
-            $this->info("\n GitHub issue URL:");
-            $this->info(" {$issue->getUpstreamTicket()}");
+            render(<<<HTML
+<div class="mx-2 mb-1 font-bold">
+    GitHub Issue URL:
+</div>
+HTML);
+            render(<<<HTML
+<div class="mx-2 mb-1">
+    {$issue->getUpstreamTicket()}
+</div>
+HTML);
         }
 
         if ($issue->getAssignee()) {
-            $this->info("\n Assignee:");
-            $this->info(" {$issue->getAssignee()}");
+            render(<<<HTML
+<div class="mx-2 mb-1 font-bold">
+    Assignee:
+</div>
+HTML);
+            render(<<<HTML
+<div class="mx-2 mb-1">
+    {$issue->getAssignee()}
+</div>
+HTML);
         }
 
-        $this->info('');
-
-        return 0;
+        return self::SUCCESS;
     }
 
-    protected function fetchIssueDetails(): ?MantisIssue
+    private function fetchIssueDetails(): MantisIssue
     {
         $id = $this->argument('id');
 
@@ -92,7 +98,7 @@ HTML);
             exit(1);
         }
 
-        $this->info("\n Fetching issue details...\n");
+        $this->info('Fetching issue details...');
 
         $issue = $this->mantisConnector->readIssue((int)$id);
 

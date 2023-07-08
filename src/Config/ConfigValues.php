@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Artemeon\M2G\Config;
 
 class ConfigValues
@@ -24,22 +26,22 @@ class ConfigValues
         $this->githubRepo = $githubRepo;
     }
 
-    public function getMantisUrl(): string
+    final public function getMantisUrl(): string
     {
         return $this->mantisUrl;
     }
 
-    public function getMantisToken(): string
+    final public function getMantisToken(): string
     {
         return $this->mantisToken;
     }
 
-    public function getGithubToken(): string
+    final public function getGithubToken(): string
     {
         return $this->githubToken;
     }
 
-    public function getGithubRepo(): string
+    final public function getGithubRepo(): string
     {
         return $this->githubRepo;
     }

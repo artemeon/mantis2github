@@ -1,20 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Artemeon\M2G\Command;
 
 use Artemeon\M2G\Helper\VersionHelper;
+
+use Exception;
+use JsonException;
 
 use function Termwind\{render};
 
 class CheckUpdateCommand extends Command
 {
-    protected function configure()
-    {
-        $this->setName('check_update')
-            ->setDescription('Checks whether a new version is available');
-    }
+    protected string $signature = 'check_update';
+    protected ?string $description = 'Checks whether a new version is available';
+    protected bool $hidden = true;
 
-    protected function handle(): int
+    /**
+     * @throws JsonException
+     * @throws Exception
+     */
+    public function __invoke(): int
     {
         $currentVersion = VersionHelper::fetchVersion();
         $latestVersion = VersionHelper::latestVersion();
@@ -38,6 +45,6 @@ class CheckUpdateCommand extends Command
 HTML);
         }
 
-        return 0;
+        return self::SUCCESS;
     }
 }

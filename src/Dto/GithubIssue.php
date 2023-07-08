@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Artemeon\M2G\Dto;
 
 use JetBrains\PhpStorm\Pure;
@@ -33,49 +35,49 @@ class GithubIssue
         );
     }
 
-    public function getId(): ?int
+    final public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getNumber(): ?int
+    final public function getNumber(): ?int
     {
         return $this->number;
     }
 
-    public function getTitle(): ?string
+    final public function getTitle(): ?string
     {
         return $this->title;
     }
 
-    public function getDescription(): ?string
+    final public function getDescription(): ?string
     {
         return $this->description;
     }
 
-    public function getIssueUrl(): ?string
+    final public function getIssueUrl(): ?string
     {
         return $this->issueUrl;
     }
 
-    public function getState(): string
+    final public function getState(): string
     {
         return $this->state;
     }
 
-    public function getAssignees(): array
+    final public function getAssignees(): array
     {
         return $this->assignees;
     }
 
-    public function setLabels(array $labels = []): self
+    final public function setLabels(array $labels = []): self
     {
         $this->labels = $labels;
 
         return $this;
     }
 
-    public function getLabels(): array
+    final public function getLabels(): array
     {
         return $this->labels ?? [];
     }

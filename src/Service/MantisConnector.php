@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Artemeon\M2G\Service;
 
 use Artemeon\M2G\Config\ConfigValues;
@@ -7,6 +9,7 @@ use Artemeon\M2G\Dto\MantisIssue;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use JsonException;
 
 class MantisConnector
 {
@@ -27,11 +30,11 @@ class MantisConnector
         ]);
     }
 
-    public function readIssue(int $number): ?MantisIssue
+    final public function readIssue(int $number): ?MantisIssue
     {
         try {
             $response = $this->client->get((string) $number);
-            $result = json_decode($response->getBody(), true);
+            $result = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         } catch (GuzzleException | Exception) {
             return null;
         }
@@ -56,7 +59,10 @@ class MantisConnector
         return $issue;
     }
 
-    public function patchUpstreamField(MantisIssue $issue): bool
+    /**
+     * @throws JsonException
+     */
+    final public function patchUpstreamField(MantisIssue $issue): bool
     {
         $body = json_encode([
             'custom_fields' => [
@@ -68,7 +74,7 @@ class MantisConnector
                     'value' => $issue->getUpstreamTicket(),
                 ],
             ],
-        ]);
+        ], JSON_THROW_ON_ERROR);
 
         try {
             $this->client->patch(

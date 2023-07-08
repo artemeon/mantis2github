@@ -7,12 +7,16 @@ namespace Artemeon\M2G\Helper;
 use ahinkle\PackagistLatestVersion\PackagistLatestVersion;
 use Composer\InstalledVersions;
 use Exception;
+use JsonException;
 
 class VersionHelper
 {
+    /**
+     * @throws JsonException
+     */
     public static function getPackageName(): ?string
     {
-        $packageJson = json_decode(file_get_contents(__DIR__ . '/../../composer.json'), true);
+        $packageJson = json_decode(file_get_contents(__DIR__ . '/../../composer.json'), true, 512, JSON_THROW_ON_ERROR);
 
         return $packageJson['name'] ?? null;
     }
@@ -40,7 +44,7 @@ class VersionHelper
         $currentVersion = self::fetchVersion();
         $latestVersion = self::latestVersion();
 
-        if (!preg_match("/^[0-9]+\.[0-9]+\.[0-9]+$/", $currentVersion)) {
+        if (!preg_match("/^\d+\.\d+\.\d+$/", $currentVersion)) {
             return false;
         }
 

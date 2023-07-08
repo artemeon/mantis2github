@@ -1,26 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Artemeon\M2G\Command;
 
 use Artemeon\M2G\Config\ConfigReader;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Yaml\Yaml;
 
 use function Termwind\{render, terminal};
 
 class ConfigurationCommand extends Command
 {
+    protected string $signature = 'configure {file? : The config.yaml to use for setting up the tool.}';
+    protected ?string $description = 'Configure the tool';
+
     protected string $configPath = __DIR__ . '/../../../config.yaml';
     protected array $config = [];
 
-    protected function configure()
-    {
-        $this->setName('configure')
-            ->setDescription('Configure the tool')
-            ->addArgument('file', InputArgument::OPTIONAL, 'The config.yaml to use for setting up the tool.');
-    }
-
-    protected function handle(): int
+    public function __invoke(): int
     {
         $this->readExistingConfigFromPath();
 
@@ -34,9 +31,10 @@ class ConfigurationCommand extends Command
             $this->warn('Configuration file already exists');
             $this->warn('If you continue your configuration will be overwritten');
 
-            if ($this->ask("\n Are you sure you want to continue? [Y/n]", 'n') !== 'Y') {
+            if (!$this->confirm("\n Are you sure you want to continue?")) {
                 $this->info("\n Alright!\n");
-                return 1;
+
+                return self::INVALID;
             }
         }
 
@@ -50,14 +48,12 @@ class ConfigurationCommand extends Command
         $this->askForGitHubRepository();
         $this->saveConfig();
 
-        return 0;
+        return self::SUCCESS;
     }
 
-    protected function askForMantisUrl(): void
+    private function askForMantisUrl(): void
     {
-        $this->info(" Please enter the URL of your Mantis installation (e.g. https://tickets.company.tld):");
-
-        $mantisUrl = $this->ask(" >");
+        $mantisUrl = $this->ask('Please enter the URL of your Mantis installation (e.g. https://tickets.company.tld):');
 
         $parsedUrl = parse_url($mantisUrl);
 
@@ -72,7 +68,7 @@ class ConfigurationCommand extends Command
         $mantisUrl = "{$parsedUrl['scheme']}://{$parsedUrl['host']}$port/";
 
         // Check if something is available on the given URL
-        // If not, we assume that the URL is wrong
+        // If not, we assume that the URL is wrong.
         $headers = @get_headers($mantisUrl);
         if (!$headers || $headers[0] === 'HTTP/1.1 404 Not Found') {
             $this->error(
@@ -85,12 +81,10 @@ class ConfigurationCommand extends Command
         $this->config['mantisUrl'] = $mantisUrl;
     }
 
-    protected function askForMantisToken(): void
+    private function askForMantisToken(): void
     {
-        $this->info("\n Head over to {$this->config['mantisUrl']}api_tokens_page.php, create a new API token,");
-        $this->info(" and enter the token here:");
-
-        $token = $this->secret(" >");
+        $this->info("Head over to {$this->config['mantisUrl']}api_tokens_page.php and create a new API token.");
+        $token = $this->secret('Mantis API Token');
 
         if (empty($token)) {
             $this->error('The token is empty. Please try again.');
@@ -101,12 +95,11 @@ class ConfigurationCommand extends Command
         $this->config['mantisToken'] = $token;
     }
 
-    protected function askForGitHubToken(): void
+    private function askForGitHubToken(): void
     {
-        $this->info("\n Head over to https://github.com/settings/tokens, create a new personal access token");
-        $this->info(" with the `repo` scope and enter the token here:");
+        $this->info("Head over to https://github.com/settings/tokens, create a new personal access token with the `repo` scope.");
 
-        $token = $this->secret(" >");
+        $token = $this->secret("GitHub Token");
 
         if (empty($token)) {
             $this->error('The token is empty. Please try again.');
@@ -117,11 +110,9 @@ class ConfigurationCommand extends Command
         $this->config['githubToken'] = $token;
     }
 
-    protected function askForGitHubRepository(): void
+    private function askForGitHubRepository(): void
     {
-        $this->info("\n Enter the GitHub repository you want to create issues for (e.g. user/repository):");
-
-        $repository = $this->ask(" >");
+        $repository = $this->ask('Enter the GitHub repository you want to create issues for (e.g. user/repository)');
 
         if (empty($repository) || count(explode('/', $repository)) !== 2) {
             $this->error("The given repository is invalid.");
@@ -132,7 +123,7 @@ class ConfigurationCommand extends Command
         $this->config['githubRepository'] = $repository;
     }
 
-    protected function saveConfig(): void
+    private function saveConfig(): void
     {
         $stub = file_get_contents(__DIR__ . '/../../stubs/config.yaml.stub');
 
@@ -153,7 +144,7 @@ HTML
         $this->success(" Synchronize your first issue by running `mantis2github sync`!\n");
     }
 
-    protected function readExistingConfigFromPath()
+    private function readExistingConfigFromPath(): void
     {
         if (!$this->argument('file')) {
             return;
@@ -183,6 +174,6 @@ HTML
 
         $this->saveConfig();
 
-        exit(0);
+        exit(self::SUCCESS);
     }
 }
