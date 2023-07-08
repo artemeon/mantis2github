@@ -1,3 +1,4 @@
-/config.yaml
-/vendor/
-/.idea/
+.idea/
+vendor/
+composer.lock
+config.yaml

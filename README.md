@@ -100,3 +100,7 @@ mantis2github read:mantis <id>
 | Argument | required | Description     |
 |----------|----------|-----------------|
 | `id`     | `true`   | Mantis issue id |
+
+## License
+
+This project is open-sourced software licensed under the [MIT license](LICENSE).

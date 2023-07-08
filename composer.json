@@ -1,34 +1,34 @@
 {
-  "name": "artemeon/mantis2github",
-  "description": "A small CLI tool to create a GitHub issue out of a Mantis issue.",
-  "type": "library",
-  "license": "MIT",
-  "bin": [
-    "mantis2github"
-  ],
-  "authors": [
-    {
-      "name": "Stefan Idler",
-      "email": "stefan.idler@artemeon.de"
+    "name": "artemeon/mantis2github",
+    "description": "A small CLI tool to create a GitHub issue from a Mantis ticket.",
+    "license": "MIT",
+    "bin": [
+        "bin/mantis2github"
+    ],
+    "authors": [
+        {
+            "name": "Stefan Idler",
+            "email": "stefan.idler@artemeon.de"
+        },
+        {
+            "name": "Marc Reichel",
+            "email": "marc.reichel@artemeon.de"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Artemeon\\M2G\\": "src/"
+        }
     },
-    {
-      "name": "Marc Reichel",
-      "email": "marc.reichel@artemeon.de"
+    "require": {
+        "php": ">=8.0",
+        "ext-json": "*",
+        "artemeon/console": "^0.2.0",
+        "guzzlehttp/guzzle": "^7.3.0",
+        "symfony/console": "^6.0",
+        "symfony/yaml": "^6.0",
+        "nunomaduro/termwind": "^1.5",
+        "composer-runtime-api": "^2.2.2",
+        "ahinkle/packagist-latest-version": "^2.0"
     }
-  ],
-  "autoload": {
-    "psr-4": {
-      "Artemeon\\M2G\\": "src/"
-    }
-  },
-  "require": {
-    "php": ">=8.0",
-    "ext-json": "*",
-    "guzzlehttp/guzzle": "^7.3.0",
-    "symfony/console": "^6.0",
-    "symfony/yaml": "^6.0",
-    "nunomaduro/termwind": "^1.5",
-    "composer-runtime-api": "^2.2.2",
-    "ahinkle/packagist-latest-version": "^2.0"
-  }
 }

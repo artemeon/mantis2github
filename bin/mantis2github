@@ -13,10 +13,10 @@ use Artemeon\M2G\Service\MantisConnector;
 use Symfony\Component\Console\Application;
 
 (new class() {
-    protected string $name;
-    protected string $version;
+    private string $name;
+    private string $version;
 
-    public function main()
+    public function main(): void
     {
         $this->autoload();
         $this->fetchVersion();
@@ -34,7 +34,7 @@ use Symfony\Component\Console\Application;
         $app->run();
     }
 
-    protected function autoload()
+    private function autoload(): void
     {
         if (isset($GLOBALS['_composer_autoload_path'])) {
             define('COMPOSER_INSTALL_PATH', $GLOBALS['_composer_autoload_path']);
@@ -43,9 +43,9 @@ use Symfony\Component\Console\Application;
         } else {
             foreach (
                 [
-                    __DIR__ . '/../../autoload.php',
-                    __DIR__ . '/../vendor/autoload.php',
-                    __DIR__ . '/vendor/autoload.php'
+                    __DIR__ . '/../../../autoload.php',
+                    __DIR__ . '/../../vendor/autoload.php',
+                    __DIR__ . '/../vendor/autoload.php'
                 ] as $file
             ) {
                 if (file_exists($file)) {
@@ -61,9 +61,9 @@ use Symfony\Component\Console\Application;
         require COMPOSER_INSTALL_PATH;
     }
 
-    protected function fetchVersion()
+    private function fetchVersion(): void
     {
-        $packageJson = json_decode(file_get_contents(__DIR__ . '/composer.json'), true);
+        $packageJson = json_decode(file_get_contents(__DIR__ . '/../composer.json'), true, 512, JSON_THROW_ON_ERROR);
 
         $name = $packageJson['name'] ?? null;
         $this->name = explode('/', $name)[1] ?? null;
