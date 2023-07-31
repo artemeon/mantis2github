@@ -11,7 +11,7 @@ use function Termwind\{render, style, terminal};
 
 class ReadGithubIssueCommand extends Command
 {
-    protected string $signature = 'read:github {id : GitHub issue id}';
+    protected string $signature = 'read:github {id : GitHub issue ID}';
     protected ?string $description = 'Read details of a GitHub issue';
 
     private GithubConnector $githubConnector;
@@ -36,12 +36,14 @@ class ReadGithubIssueCommand extends Command
         terminal()->clear();
 
         if ($issue->getState() === 'open') {
-            render(<<<HTML
+            render(
+                <<<HTML
 <div class="my-1 mx-2 px-1 bg-green-500 text-white font-bold">
     Issue is open
 </div>
-HTML);
-        } else if ($issue->getState() === 'closed') {
+HTML
+            );
+        } elseif ($issue->getState() === 'closed') {
             render(
                 <<<HTML
 <div class="my-1 mx-2 px-1 bg-purple-500 text-white font-bold">
@@ -51,32 +53,44 @@ HTML
             );
         }
 
-        render(<<<HTML
+        render(
+            <<<HTML
 <div class="mx-2 mb-1 font-bold">
     {$issue->getTitle()}
 </div>
-HTML);
-        render(<<<HTML
+HTML
+        );
+        render(
+            <<<HTML
 <div class="mx-2 mb-1">
     {$issue->getIssueUrl()}
 </div>
-HTML);
+HTML
+        );
 
-        $assignees = array_map(static fn ($assignee) => "<a href=\"{$assignee['html_url']}\" class=\"px-1 bg-blue-500 text-black\">{$assignee['login']}</a>", $issue->getAssignees());
+        $assignees = array_map(
+            static fn($assignee
+            ) => "<a href=\"{$assignee['html_url']}\" class=\"px-1 bg-blue-500 text-black\">{$assignee['login']}</a>",
+            $issue->getAssignees()
+        );
 
         if (count($assignees)) {
             $text = 'Assignee' . (count($assignees) > 1 ? 's' : '') . ':';
-            render(<<<HTML
+            render(
+                <<<HTML
 <div class="mx-2 mb-1">
     {$text}
 </div>
-HTML);
+HTML
+            );
             $assigneesHtml = implode(' ', $assignees);
-            render(<<<HTML
+            render(
+                <<<HTML
 <div class="mx-2 mb-1">
     $assigneesHtml
 </div>
-HTML);
+HTML
+            );
         }
 
         $labels = $issue->getLabels();
@@ -88,19 +102,23 @@ HTML);
             }, $labels);
 
             $text = 'Label' . (count($labels) > 1 ? 's' : '') . ':';
-            render(<<<HTML
+            render(
+                <<<HTML
 <div class="mx-2 mb-1">
     {$text}
 </div>
-HTML);
+HTML
+            );
 
             $labelsHtml = implode(' ', $labels);
 
-            render(<<<HTML
+            render(
+                <<<HTML
 <div class="mx-2 mb-1">
     $labelsHtml
 </div>
-HTML);
+HTML
+            );
         }
 
         return self::SUCCESS;

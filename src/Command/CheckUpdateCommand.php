@@ -29,7 +29,8 @@ class CheckUpdateCommand extends Command
         $name = VersionHelper::getPackageName();
 
         if ($updateAvailable) {
-            render(<<<HTML
+            render(
+                <<<HTML
 <table>
     <thead>
         <tr>
@@ -42,7 +43,8 @@ class CheckUpdateCommand extends Command
         </tr>
     </tbody>
 </table>
-HTML);
+HTML
+            );
         }
 
         return self::SUCCESS;

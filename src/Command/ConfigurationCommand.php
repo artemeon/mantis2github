@@ -31,8 +31,8 @@ class ConfigurationCommand extends Command
             $this->warn('Configuration file already exists');
             $this->warn('If you continue your configuration will be overwritten');
 
-            if (!$this->confirm("\n Are you sure you want to continue?")) {
-                $this->info("\n Alright!\n");
+            if (!$this->confirm('Are you sure you want to continue?')) {
+                $this->info('Alright!');
 
                 return self::INVALID;
             }
@@ -53,30 +53,40 @@ class ConfigurationCommand extends Command
 
     private function askForMantisUrl(): void
     {
-        $mantisUrl = $this->ask('Please enter the URL of your Mantis installation (e.g. https://tickets.company.tld):');
+        $mantisUrl = $this->ask(
+            label: 'The URL of your Mantis installation',
+            placeholder: 'E.g. https://tickets.company.tld/',
+            required: true,
+            validate: function ($value) {
+                $parsedUrl = parse_url($value);
+
+                if ($parsedUrl === false) {
+                    return 'You must enter a valid URL.';
+                }
+
+                if (!isset($parsedUrl['scheme'])) {
+                    return 'The URL must include a scheme like "http://" or "https://".';
+                }
+
+                if (!isset($parsedUrl['host'])) {
+                    return 'The URL must include a valid host.';
+                }
+
+                $port = isset($parsedUrl['port']) ? ':' . $parsedUrl['port'] : '';
+                $mantisUrl = "{$parsedUrl['scheme']}://{$parsedUrl['host']}$port/";
+
+                $headers = @get_headers($mantisUrl);
+                if (!$headers || $headers[0] === 'HTTP/1.1 404 Not Found') {
+                    return 'The given URL is unreachable. If this error persists, please check your internet connection.';
+                }
+
+                return null;
+            },
+        );
 
         $parsedUrl = parse_url($mantisUrl);
-
-        if ($parsedUrl === false || !isset($parsedUrl['scheme']) || !isset($parsedUrl['host'])) {
-            $this->error("The URL you entered is invalid.");
-
-            $this->askForMantisUrl();
-        }
-
         $port = isset($parsedUrl['port']) ? ':' . $parsedUrl['port'] : '';
-
         $mantisUrl = "{$parsedUrl['scheme']}://{$parsedUrl['host']}$port/";
-
-        // Check if something is available on the given URL
-        // If not, we assume that the URL is wrong.
-        $headers = @get_headers($mantisUrl);
-        if (!$headers || $headers[0] === 'HTTP/1.1 404 Not Found') {
-            $this->error(
-                "The given URL is unreachable. If this error persists, please check your internet connection."
-            );
-
-            $this->askForMantisUrl();
-        }
 
         $this->config['mantisUrl'] = $mantisUrl;
     }
@@ -84,43 +94,36 @@ class ConfigurationCommand extends Command
     private function askForMantisToken(): void
     {
         $this->info("Head over to {$this->config['mantisUrl']}api_tokens_page.php and create a new API token.");
-        $token = $this->secret('Mantis API Token');
 
-        if (empty($token)) {
-            $this->error('The token is empty. Please try again.');
-
-            $this->askForMantisToken();
-        }
-
-        $this->config['mantisToken'] = $token;
+        $this->config['mantisToken'] = $this->password(
+            label: 'Mantis API Token',
+            required: true,
+        );
     }
 
     private function askForGitHubToken(): void
     {
-        $this->info("Head over to https://github.com/settings/tokens, create a new personal access token with the `repo` scope.");
+        $this->info('Head over to https://github.com/settings/tokens, create a new personal access token with the `repo` scope.');
 
-        $token = $this->secret("GitHub Token");
-
-        if (empty($token)) {
-            $this->error('The token is empty. Please try again.');
-
-            $this->askForGitHubToken();
-        }
-
-        $this->config['githubToken'] = $token;
+        $this->config['githubToken'] = $this->password(
+            label: 'GitHub Personal Access Token',
+            required: true,
+            validate: fn ($value) => !str_starts_with($value, 'ghp_') && str_starts_with($value, 'github_pat_')
+                ? 'The provided value is not a valid GitHub PAT.'
+                : null,
+        );
     }
 
     private function askForGitHubRepository(): void
     {
-        $repository = $this->ask('Enter the GitHub repository you want to create issues for (e.g. user/repository)');
-
-        if (empty($repository) || count(explode('/', $repository)) !== 2) {
-            $this->error("The given repository is invalid.");
-
-            $this->askForGitHubRepository();
-        }
-
-        $this->config['githubRepository'] = $repository;
+        $this->config['githubRepository'] = $this->ask(
+            label: 'GitHub Repository(e.g. user/repository)',
+            placeholder: 'E.g. user/repository',
+            required: true,
+            validate: fn ($value) => count(explode('/', $value)) !== 2
+                ? 'Invalid repository name.'
+                : null,
+        );
     }
 
     private function saveConfig(): void
@@ -135,13 +138,13 @@ class ConfigurationCommand extends Command
 
         render(
             <<<HTML
-<div class="my-1 ml-1 px-1 bg-green-500 text-gray-900">
+<div class="mb-1 ml-2 px-1 bg-green-500 text-gray-900">
     <strong>🚀 Ready for liftoff! 🚀</strong>
 </div>
 HTML
         );
 
-        $this->success(" Synchronize your first issue by running `mantis2github sync`!\n");
+        $this->success('Synchronize your first issue by running `mantis2github sync`!');
     }
 
     private function readExistingConfigFromPath(): void

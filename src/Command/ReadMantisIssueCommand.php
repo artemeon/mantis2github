@@ -33,11 +33,13 @@ class ReadMantisIssueCommand extends Command
         terminal()->clear();
 
         if (in_array($issue->getResolution(), ['open', 'reopened'])) {
-            render(<<<HTML
+            render(
+                <<<HTML
 <div class="my-1 mx-2 px-1 bg-green-500 text-white font-bold">
     Issue is {$issue->getResolution()}
 </div>
-HTML);
+HTML
+            );
         } else {
             render(
                 <<<HTML
@@ -48,41 +50,53 @@ HTML
             );
         }
 
-        render(<<<HTML
+        render(
+            <<<HTML
 <div class="mx-2 mb-1 font-bold">
     [{$issue->getProject()}] {$issue->getSummary()}
 </div>
-HTML);
-        render(<<<HTML
+HTML
+        );
+        render(
+            <<<HTML
 <div class="mx-2 mb-1">
     {$issue->getIssueUrl()}
 </div>
-HTML);
+HTML
+        );
 
         if ($issue->getUpstreamTicket()) {
-            render(<<<HTML
+            render(
+                <<<HTML
 <div class="mx-2 mb-1 font-bold">
     GitHub Issue URL:
 </div>
-HTML);
-            render(<<<HTML
+HTML
+            );
+            render(
+                <<<HTML
 <div class="mx-2 mb-1">
     {$issue->getUpstreamTicket()}
 </div>
-HTML);
+HTML
+            );
         }
 
         if ($issue->getAssignee()) {
-            render(<<<HTML
+            render(
+                <<<HTML
 <div class="mx-2 mb-1 font-bold">
     Assignee:
 </div>
-HTML);
-            render(<<<HTML
+HTML
+            );
+            render(
+                <<<HTML
 <div class="mx-2 mb-1">
     {$issue->getAssignee()}
 </div>
-HTML);
+HTML
+            );
         }
 
         return self::SUCCESS;

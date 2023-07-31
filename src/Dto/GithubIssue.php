@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Artemeon\M2G\Dto;
 
-use JetBrains\PhpStorm\Pure;
-
 class GithubIssue
 {
     public function __construct(
@@ -20,7 +18,6 @@ class GithubIssue
     ) {
     }
 
-    #[Pure]
     public static function fromMantisIssue(MantisIssue $issue): GithubIssue
     {
         $rows = [

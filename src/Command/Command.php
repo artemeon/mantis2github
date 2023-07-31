@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Artemeon\M2G\Command;
 
+use Artemeon\Console\Command as BaseCommand;
 use Artemeon\M2G\Config\ConfigReader;
 
-class Command extends \Artemeon\Console\Command
+class Command extends BaseCommand
 {
-    final protected function header(): void
+    final public function header(): void
     {
         $this->output->write(
             '
@@ -18,12 +19,11 @@ class Command extends \Artemeon\Console\Command
  | |  | || (_| || | | || |_ | |\__ \  <comment>/ __/</comment>  | |_| || || |_ |  _  || |_| || |_) |
  |_|  |_| \__,_||_| |_| \__||_||___/ <comment>|_____|</comment>  \____||_| \__||_| |_| \__,_||_.__/
 
-
 '
         );
     }
 
-    final protected function checkConfig(): void
+    final public function checkConfig(): void
     {
         $config = (new ConfigReader())->read();
 

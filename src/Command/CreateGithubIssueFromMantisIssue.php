@@ -13,7 +13,7 @@ use Symfony\Component\Console\Helper\Table;
 
 class CreateGithubIssueFromMantisIssue extends Command
 {
-    protected string $signature = 'sync {ids* : Mantis issue ids}';
+    protected string $signature = 'sync {ids* : Mantis issue IDs}';
 
     protected ?string $description = 'Synchronize a list of Mantis issues to GitHub';
 
@@ -37,74 +37,70 @@ class CreateGithubIssueFromMantisIssue extends Command
         $this->title('Mantis 2 GitHub Sync');
 
         $ids = array_unique($this->argument('ids'));
+        $message = count($ids) !== 1 ? 'Creating issues ...' : 'Creating issue ...';
 
         $this->newLine();
 
-        $progressBar = new ProgressBar($this->output, count($ids));
-        $progressBar->start();
-
-        $labels = array_map(static fn ($label) => $label['name'], $this->githubConnector->getLabels());
-
         $issues = [];
 
-        foreach ($ids as $id) {
-            $mantisIssue = $this->mantisConnector->readIssue((int)$id);
+        $this->spin(function () use ($ids) {
+            $labels = array_map(static fn ($label) => $label['name'], $this->githubConnector->getLabels());
 
-            if ($mantisIssue === null) {
+            foreach ($ids as $id) {
+                $mantisIssue = $this->mantisConnector->readIssue((int)$id);
+
+                if ($mantisIssue === null) {
+                    $issues[] = [
+                        'id' => $id,
+                        'icon' => '<error>✕</error>',
+                        'message' => '<error>Mantis issue not found.</error>',
+                        'issue' => '',
+                    ];
+                    continue;
+                }
+
+                $newGithubIssue = GithubIssue::fromMantisIssue($mantisIssue);
+
+                $filteredLabels = array_values(
+                    array_filter($labels, static fn ($label) => strtolower($label) === strtolower($mantisIssue->getProject())),
+                );
+
+                $newGithubIssue->setLabels($filteredLabels);
+                $newGithubIssue = $this->githubConnector->createIssue($newGithubIssue);
+
+                if ($newGithubIssue === null) {
+                    $issues[] = [
+                        'id' => $id,
+                        'icon' => '<error>✕</error>',
+                        'message' => '<error>GitHub issue could not be created.</error>',
+                        'issue' => '',
+                    ];
+                    continue;
+                }
+
+                $mantisIssue->setUpstreamTicket(
+                    trim($mantisIssue->getUpstreamTicket() . ' ' . $newGithubIssue->getIssueUrl())
+                );
+                $patched = $this->mantisConnector->patchUpstreamField($mantisIssue);
+
+                if ($patched === false) {
+                    $issues[] = [
+                        'id' => $id,
+                        'icon' => '<error>✕</error>',
+                        'message' => '<error>Upstream ticket URL could not be updated.</error>',
+                        'issue' => '',
+                    ];
+                    continue;
+                }
+
                 $issues[] = [
                     'id' => $id,
-                    'icon' => '<error>✕</error>',
-                    'message' => '<error>Mantis issue not found.</error>',
-                    'issue' => '',
+                    'icon' => '<info>✓</info>',
+                    'message' => '<info>Mantis issue has been synchronized.</info>',
+                    'issue' => $newGithubIssue->getIssueUrl(),
                 ];
-                continue;
             }
-
-            $newGithubIssue = GithubIssue::fromMantisIssue($mantisIssue);
-
-            $filteredLabels = array_values(
-                array_filter($labels, static fn ($label) => strtolower($label) === strtolower($mantisIssue->getProject())),
-            );
-
-            $newGithubIssue->setLabels($filteredLabels);
-            $newGithubIssue = $this->githubConnector->createIssue($newGithubIssue);
-
-            if ($newGithubIssue === null) {
-                $issues[] = [
-                    'id' => $id,
-                    'icon' => '<error>✕</error>',
-                    'message' => '<error>GitHub issue could not be created.</error>',
-                    'issue' => '',
-                ];
-                continue;
-            }
-
-            $mantisIssue->setUpstreamTicket(
-                trim($mantisIssue->getUpstreamTicket() . ' ' . $newGithubIssue->getIssueUrl())
-            );
-            $patched = $this->mantisConnector->patchUpstreamField($mantisIssue);
-
-            if ($patched === false) {
-                $issues[] = [
-                    'id' => $id,
-                    'icon' => '<error>✕</error>',
-                    'message' => '<error>Upstream ticket URL could not be updated.</error>',
-                    'issue' => '',
-                ];
-                continue;
-            }
-
-            $issues[] = [
-                'id' => $id,
-                'icon' => '<info>✓</info>',
-                'message' => '<info>Mantis issue has been synchronized.</info>',
-                'issue' => $newGithubIssue->getIssueUrl(),
-            ];
-
-            $progressBar->advance();
-        }
-
-        $progressBar->finish();
+        }, $message);
 
         $this->newLine();
 
