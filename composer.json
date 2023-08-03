@@ -23,7 +23,7 @@
     "require": {
         "php": ">=8.0",
         "ext-json": "*",
-        "artemeon/console": "^0.4.0",
+        "artemeon/console": "^0.4.1",
         "guzzlehttp/guzzle": "^7.3.0",
         "symfony/console": "^5.0|^6.0",
         "symfony/yaml": "^5.0|^6.0",
