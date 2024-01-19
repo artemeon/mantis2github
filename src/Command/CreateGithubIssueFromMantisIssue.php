@@ -43,7 +43,7 @@ class CreateGithubIssueFromMantisIssue extends Command
 
         $issues = [];
 
-        $this->spin(function () use ($ids) {
+        $this->spin(function () use ($ids, &$issues) {
             $labels = array_map(static fn ($label) => $label['name'], $this->githubConnector->getLabels());
 
             foreach ($ids as $id) {
