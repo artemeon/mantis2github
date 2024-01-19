@@ -20,15 +20,11 @@ class GithubIssue
 
     public static function fromMantisIssue(MantisIssue $issue): GithubIssue
     {
-        $rows = [
-            '| Mantis Ticket |',
-            '|:-------------:|',
-            '| [MANTIS-' . $issue->getId() . '](' . $issue->getIssueUrl() . ') |',
-        ];
-        $table = implode(PHP_EOL, $rows);
+        $issueBadge = '[![MANTIS-' . $issue->getId() . '](https://img.shields.io/badge/MANTIS-' . $issue->getId() . '-green?style=for-the-badge)](' . $issue->getIssueUrl() . ')';
+
         return new self(
             title: '[MANTIS-' . $issue->getId() . '] [' . $issue->getProject() . '] ' . $issue->getSummary(),
-            description: $issue->getDescription() . PHP_EOL . PHP_EOL . $table,
+            description: $issue->getDescription() . PHP_EOL . PHP_EOL . $issueBadge,
         );
     }
 
