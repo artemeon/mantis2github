@@ -25,9 +25,9 @@
         "ext-json": "*",
         "artemeon/console": "^0.4.1",
         "guzzlehttp/guzzle": "^7.3.0",
-        "symfony/console": "^5.0|^6.0",
-        "symfony/yaml": "^5.0|^6.0",
-        "nunomaduro/termwind": "^1.5",
+        "symfony/console": "^5.0|^6.0|^7.0",
+        "symfony/yaml": "^5.0|^6.0|^7.0",
+        "nunomaduro/termwind": "^1.5|^2.0",
         "composer-runtime-api": "^2.2.2",
         "ahinkle/packagist-latest-version": "^2.0"
     },
