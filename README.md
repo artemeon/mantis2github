@@ -39,11 +39,12 @@ mantis2github [command]
 
 ### Available Commands
 
-| Command                      | Description                               |
-|------------------------------|-------------------------------------------|
-| [`sync`](#sync)              | Create a GitHub issue from a Mantis issue |
-| [`read:github`](#readgithub) | Read details of a GitHub issue            |
-| [`read:mantis`](#readmantis) | Read details of a Mantis issue            |
+| Command                      | Description                                                       |
+|------------------------------|-------------------------------------------------------------------|
+| [`sync`](#sync)              | Create a GitHub issue from a Mantis issue                         |
+| [`read:github`](#readgithub) | Read details of a GitHub issue                                    |
+| [`read:mantis`](#readmantis) | Read details of a Mantis issue                                    |
+| [`issues:list`](#issueslist) | Get a list of Mantis Tickets with their associated GitHub Issues. |
 
 #### `sync`
 
@@ -100,6 +101,20 @@ mantis2github read:mantis <id>
 | Argument | required | Description     |
 |----------|----------|-----------------|
 | `id`     | `true`   | Mantis issue id |
+
+#### `issues:list`
+
+Get a list of Mantis Tickets with their associated GitHub Issues.
+
+```shell
+mantis2github issues:list [--output=html]
+```
+
+##### Options
+
+| Option   | Possible values | Description   |
+|----------|-----------------|---------------|
+| `output` | `html`          | Output Format |
 
 ## License
 
