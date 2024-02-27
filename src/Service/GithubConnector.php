@@ -9,6 +9,7 @@ use Artemeon\M2G\Dto\GithubIssue;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\RequestOptions;
 use JsonException;
 
 class GithubConnector
@@ -92,6 +93,23 @@ class GithubConnector
         try {
             $response = $this->client->get('labels');
             $result = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (GuzzleException | Exception) {
+            return [];
+        }
+
+        return $result ?: [];
+    }
+
+    final public function graphql(string $query): array
+    {
+        try {
+            $response = $this->client->post('https://api.github.com/graphql', [
+                RequestOptions::JSON => [
+                    'query' => $query,
+                ],
+            ]);
+
+            $result = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         } catch (GuzzleException | Exception) {
             return [];
         }

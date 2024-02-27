@@ -4,6 +4,7 @@
 use Artemeon\M2G\Command\CheckUpdateCommand;
 use Artemeon\M2G\Command\ConfigurationCommand;
 use Artemeon\M2G\Command\CreateGithubIssueFromMantisIssue;
+use Artemeon\M2G\Command\IssuesListCommand;
 use Artemeon\M2G\Command\ReadGithubIssueCommand;
 use Artemeon\M2G\Command\ReadMantisIssueCommand;
 use Artemeon\M2G\Config\ConfigReader;
@@ -30,6 +31,7 @@ use Symfony\Component\Console\Application;
         $app->add(new ReadMantisIssueCommand($mantisConnector));
         $app->add(new ReadGithubIssueCommand($githubConnector));
         $app->add(new CreateGithubIssueFromMantisIssue($mantisConnector, $githubConnector));
+        $app->add(new IssuesListCommand($mantisConnector, $githubConnector, $configValues));
         $app->add(new CheckUpdateCommand());
         $app->run();
     }

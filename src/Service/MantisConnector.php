@@ -30,6 +30,31 @@ class MantisConnector
         ]);
     }
 
+    /**
+     * @return MantisIssue[]
+     */
+    final public function fetchIssues(int $filterId = null): array
+    {
+        try {
+            $query = http_build_query(array_filter([
+                'filter_id' => $filterId,
+                'page_size' => 400,
+            ], static fn (mixed $value) => $value !== null));
+
+            $response = $this->client->get($query ? '?' . $query : '');
+            $result = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (GuzzleException | Exception) {
+            return [];
+        }
+
+        $output = [];
+        foreach ($result['issues'] as $issue) {
+            $output[] = $this->mapIssue($issue, 'label');
+        }
+
+        return $output;
+    }
+
     final public function readIssue(int $number): ?MantisIssue
     {
         try {
@@ -39,24 +64,7 @@ class MantisConnector
             return null;
         }
 
-        $mantisBaseUrl = $this->config->getMantisUrl();
-        if (!str_ends_with($mantisBaseUrl, '/')) {
-            $mantisBaseUrl .= '/';
-        }
-
-        $issue = new MantisIssue(
-            id: $result['issues'][0]['id'],
-            summary: $result['issues'][0]['summary'],
-            description: $result['issues'][0]['description'],
-            project: $result['issues'][0]['project']['name'],
-            status: $result['issues'][0]['status']['name'],
-            resolution: $result['issues'][0]['resolution']['name'],
-            assignee: $result['issues'][0]['handler']['real_name'] ?? $result['issues'][0]['handler']['name'] ?? null,
-            issueUrl: $mantisBaseUrl . 'view.php?id=' . $result['issues'][0]['id'],
-        );
-        $this->updateUpstreamFieldsIssue($result['issues'][0], $issue);
-
-        return $issue;
+        return $this->mapIssue($result['issues'][0]);
     }
 
     /**
@@ -87,6 +95,28 @@ class MantisConnector
         } catch (GuzzleException | Exception) {
             return false;
         }
+    }
+
+    private function mapIssue(array $data, string $status = 'name'): MantisIssue
+    {
+        $mantisBaseUrl = $this->config->getMantisUrl();
+        if (!str_ends_with($mantisBaseUrl, '/')) {
+            $mantisBaseUrl .= '/';
+        }
+
+        $issue = new MantisIssue(
+            id: $data['id'],
+            summary: $data['summary'],
+            description: $data['description'],
+            project: $data['project']['name'],
+            status: $data['status'][$status],
+            resolution: $data['resolution']['name'],
+            assignee: $data['handler']['real_name'] ?? $data['handler']['name'] ?? null,
+            issueUrl: $mantisBaseUrl . 'view.php?id=' . $data['id'],
+        );
+        $this->updateUpstreamFieldsIssue($data, $issue);
+
+        return $issue;
     }
 
     private function updateUpstreamFieldsIssue(array $issue, MantisIssue $mantisIssue): void
