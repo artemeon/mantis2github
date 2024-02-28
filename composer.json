@@ -5,6 +5,9 @@
     "bin": [
         "bin/mantis2github"
     ],
+    "scripts": {
+        "phpstan": "php ./vendor/bin/phpstan analyse --memory-limit=4G"
+    },
     "authors": [
         {
             "name": "Stefan Idler",
@@ -32,6 +35,7 @@
         "ahinkle/packagist-latest-version": "^2.0"
     },
     "require-dev": {
-        "roave/security-advisories": "dev-latest"
+        "roave/security-advisories": "dev-latest",
+        "phpstan/phpstan": "^1.10.59"
     }
 }
