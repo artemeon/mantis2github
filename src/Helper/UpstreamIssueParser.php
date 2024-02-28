@@ -7,7 +7,10 @@ namespace Artemeon\M2G\Helper;
 class UpstreamIssueParser
 {
     /**
-     * @return array<int, array<string, mixed>>
+     * @return array{
+     *     url: string,
+     *     id: int,
+     * }[]
      */
     public static function parse(?string $input): array
     {
@@ -30,7 +33,7 @@ class UpstreamIssueParser
                 continue;
             }
 
-            $issues[] = ['url' => $part, 'id' => $matches[1]];
+            $issues[] = ['url' => $part, 'id' => (int) $matches[1]];
         }
 
         return $issues;

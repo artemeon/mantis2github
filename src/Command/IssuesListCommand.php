@@ -37,6 +37,7 @@ class IssuesListCommand extends Command
 
         $mantisIssues = $this->mantisConnector->fetchIssues(410);
 
+        /** @var array<string> $githubIssueIds */
         $githubIssueIds = [];
         foreach ($mantisIssues as $issue) {
             $parsedIssues = array_map(static fn (array $data) => $data['id'], UpstreamIssueParser::parse($issue->getUpstreamTicket()));
@@ -44,6 +45,7 @@ class IssuesListCommand extends Command
         }
 
         $parts = [];
+        /** @var string $id */
         foreach (array_unique($githubIssueIds) as $id) {
             $parts[] = <<<GRAPHQL
 issue$id: issue(number: $id) {
@@ -74,7 +76,9 @@ GRAPHQL;
 $issueFragment
 GRAPHQL;
 
-        $githubResult = $this->githubConnector->graphql($query)['data']['repository'];
+        /** @var array{ repository: array<string, array{ title: string, url: string, closed: bool }> } $result */
+        $result = $this->githubConnector->graphql($query);
+        $githubResult = $result['repository'];
 
         switch ($this->option('output')) {
             case 'html':

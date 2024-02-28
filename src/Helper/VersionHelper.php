@@ -26,6 +26,11 @@ class VersionHelper
             return null;
         }
 
+        /**
+         * @var array{
+         *     name?: string,
+         * } $packageJson
+         */
         $packageJson = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
         return $packageJson['name'] ?? null;

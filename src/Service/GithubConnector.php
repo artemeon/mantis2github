@@ -37,6 +37,25 @@ class GithubConnector
             $response = $this->client->get(
                 'issues/' . $number,
             );
+            /**
+             * @var array{
+             *     id: int,
+             *     number: int,
+             *     title: string,
+             *     body: ?string,
+             *     html_url: string,
+             *     state: string,
+             *     assignees: array{
+             *         html_url: string,
+             *         login: string,
+             *     }[],
+             *     labels: array{
+             *         id: int,
+             *         name: string,
+             *         color: string,
+             *     }[],
+             * } $result
+             */
             $result = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         } catch (Exception | GuzzleException) {
             return null;
@@ -74,13 +93,32 @@ class GithubConnector
             return null;
         }
 
+        /**
+         * @var array{
+         *     id: int,
+         *     number: int,
+         *     title: string,
+         *     body: ?string,
+         *     html_url: string,
+         *     state: string,
+         *     assignees: array{
+         *         html_url: string,
+         *         login: string,
+         *     }[],
+         *     labels: array{
+         *         id: int,
+         *         name: string,
+         *         color: string,
+         *     }[],
+         * } $result
+         */
         $result = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
 
         return new GithubIssue(
             id: $result['id'],
             number: $result['number'],
             title: $result['title'],
-            description: $result['body'],
+            description: $result['body'] ?? '',
             issueUrl: $result['html_url'],
             state: $result['state'],
             assignees: $result['assignees'],
@@ -89,12 +127,19 @@ class GithubConnector
     }
 
     /**
-     * @return array<int, mixed>
+     * @return array{
+     *     name: string,
+     * }[]
      */
     final public function getLabels(): array
     {
         try {
             $response = $this->client->get('labels');
+            /**
+             * @var array{
+             *     name: string,
+             * }[] $result
+             */
             $result = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         } catch (Exception | GuzzleException) {
             return [];
@@ -104,7 +149,7 @@ class GithubConnector
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array{ data: mixed }
      */
     final public function graphql(string $query): array
     {
@@ -115,11 +160,14 @@ class GithubConnector
                 ],
             ]);
 
+            /**
+             * @var ?array{ data: mixed } $result
+             */
             $result = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         } catch (Exception | GuzzleException) {
-            return [];
+            return ['data' => null];
         }
 
-        return $result ?: [];
+        return $result ?? ['data' => null];
     }
 }

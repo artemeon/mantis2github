@@ -8,6 +8,13 @@ use Artemeon\M2G\Command\IssuesListCommand;
 
 class HtmlTableConverter implements ConverterInterface
 {
+    /**
+     * @param array<string, array{
+     *     url: string,
+     *     title: string,
+     *     closed: bool,
+     * }> $githubResult
+     */
     public static function convert(IssuesListCommand $command, array $mantisIssues, array $githubResult): void
     {
         $rows = [];
@@ -15,6 +22,9 @@ class HtmlTableConverter implements ConverterInterface
         foreach ($mantisIssues as $issue) {
             $githubIssues = array_map(static function (array $data) use ($githubResult) {
                 $githubIssue = $githubResult['issue' . $data['id']] ?? null;
+                if (!$githubIssue) {
+                    return '';
+                }
 
                 $url = $githubIssue['url'];
                 $title = $githubIssue['title'];

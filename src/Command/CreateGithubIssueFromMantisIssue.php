@@ -48,7 +48,7 @@ class CreateGithubIssueFromMantisIssue extends Command
         $issues = [];
 
         $this->spin(function () use ($ids, &$issues): void {
-            $labels = array_map(static fn ($label) => $label['name'], $this->githubConnector->getLabels());
+            $labels = array_map(static fn (array $label) => $label['name'], $this->githubConnector->getLabels());
 
             foreach ($ids as $id) {
                 $mantisIssue = $this->mantisConnector->readIssue((int) $id);
@@ -66,6 +66,13 @@ class CreateGithubIssueFromMantisIssue extends Command
 
                 $newGithubIssue = GithubIssue::fromMantisIssue($mantisIssue);
 
+                /**
+                 * @var array{
+                 *     id: int,
+                 *     name: string,
+                 *     color: string,
+                 * }[] $filteredLabels
+                 */
                 $filteredLabels = array_values(
                     array_filter($labels, static fn (string $label) => strtolower($label) === strtolower($mantisIssue->getProject())),
                 );

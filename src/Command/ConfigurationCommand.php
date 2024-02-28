@@ -17,9 +17,19 @@ class ConfigurationCommand extends Command
     protected string $configPath = __DIR__ . '/../../../config.yaml';
 
     /**
-     * @var array<string, mixed>
+     * @var array{
+     *     mantisUrl: string,
+     *     mantisToken: string,
+     *     githubToken: string,
+     *     githubRepository: string,
+     * }
      */
-    protected array $config = [];
+    protected array $config = [
+        'mantisUrl' => '',
+        'mantisToken' => '',
+        'githubToken' => '',
+        'githubRepository' => '',
+    ];
 
     public function __invoke(): int
     {
@@ -168,9 +178,17 @@ HTML
             exit(1);
         }
 
+        /**
+         * @var array{
+         *     MANTIS_URL?: string,
+         *     MANTIS_TOKEN?: string,
+         *     GITHUB_TOKEN?: string,
+         *     GITHUB_REPOSITORY?: string,
+         * } $config
+         */
         $config = Yaml::parseFile($file);
 
-        if (!$config['MANTIS_URL'] || !$config['MANTIS_TOKEN'] || !$config['GITHUB_TOKEN'] || !$config['GITHUB_REPOSITORY']) {
+        if (!isset($config['MANTIS_URL'], $config['MANTIS_TOKEN'], $config['GITHUB_TOKEN'], $config['GITHUB_REPOSITORY'])) {
             $this->error('The given config file is incomplete.');
             $this->info('Please configure the tool without the file parameter.');
 

@@ -8,6 +8,13 @@ use Artemeon\M2G\Command\IssuesListCommand;
 
 class CliTableConverter implements ConverterInterface
 {
+    /**
+     * @param array<string, array{
+     *     url: string,
+     *     title: string,
+     *     closed: bool,
+     * }> $githubResult
+     */
     public static function convert(IssuesListCommand $command, array $mantisIssues, array $githubResult): void
     {
         $rows = [];

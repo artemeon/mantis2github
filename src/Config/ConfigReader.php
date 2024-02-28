@@ -22,9 +22,17 @@ class ConfigReader
             throw new RuntimeException('Invalid config file provided.');
         }
 
+        /**
+         * @var array{
+         *     MANTIS_URL?: string,
+         *     MANTIS_TOKEN?: string,
+         *     GITHUB_TOKEN?: string,
+         *     GITHUB_REPOSITORY?: string,
+         * } $config
+         */
         $config = Yaml::parse($content);
 
-        if (!$config['MANTIS_URL'] || !$config['MANTIS_TOKEN'] || !$config['GITHUB_TOKEN'] || !$config['GITHUB_REPOSITORY']) {
+        if (!isset($config['MANTIS_URL'], $config['MANTIS_TOKEN'], $config['GITHUB_TOKEN'], $config['GITHUB_REPOSITORY'])) {
             return null;
         }
 
