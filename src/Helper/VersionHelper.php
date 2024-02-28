@@ -33,7 +33,7 @@ class VersionHelper
 
     public static function fetchVersion(): string
     {
-        return InstalledVersions::getPrettyVersion('artemeon/mantis2github');
+        return InstalledVersions::getPrettyVersion('artemeon/mantis2github') ?? '';
     }
 
     /**
@@ -42,8 +42,12 @@ class VersionHelper
     public static function latestVersion(): ?string
     {
         $packagist = new PackagistLatestVersion();
+        $packageName = self::getPackageName();
+        if (!$packageName) {
+            return null;
+        }
 
-        return $packagist->getLatestRelease(self::getPackageName())['version'] ?? null;
+        return $packagist->getLatestRelease($packageName)['version'] ?? null;
     }
 
     /**
@@ -53,6 +57,10 @@ class VersionHelper
     {
         $currentVersion = self::fetchVersion();
         $latestVersion = self::latestVersion();
+
+        if (!$currentVersion || !$latestVersion) {
+            return false;
+        }
 
         if (!preg_match("/^\d+\.\d+\.\d+$/", $currentVersion)) {
             return false;

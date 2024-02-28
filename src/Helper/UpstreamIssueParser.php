@@ -9,7 +9,7 @@ class UpstreamIssueParser
     /**
      * @return array<int, array<string, mixed>>
      */
-    public static function parse(string $input): array
+    public static function parse(?string $input): array
     {
         if (!$input) {
             return [];

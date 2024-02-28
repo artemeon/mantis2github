@@ -10,6 +10,7 @@ use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use JsonException;
+use RuntimeException;
 
 class MantisConnector
 {
@@ -17,7 +18,7 @@ class MantisConnector
 
     public function __construct(private ?ConfigValues $config)
     {
-        if (!$config) {
+        if (!$this->config) {
             return;
         }
         $this->client = new Client([
@@ -102,6 +103,10 @@ class MantisConnector
      */
     private function mapIssue(array $data, string $status = 'name'): MantisIssue
     {
+        if (!$this->config) {
+            throw new RuntimeException('Config is missing.');
+        }
+
         $mantisBaseUrl = $this->config->getMantisUrl();
         if (!str_ends_with($mantisBaseUrl, '/')) {
             $mantisBaseUrl .= '/';

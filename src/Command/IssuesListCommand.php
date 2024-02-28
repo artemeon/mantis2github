@@ -31,6 +31,10 @@ class IssuesListCommand extends Command
 
     public function __invoke(): int
     {
+        if (!$this->config) {
+            return self::INVALID;
+        }
+
         $mantisIssues = $this->mantisConnector->fetchIssues(410);
 
         $githubIssueIds = [];

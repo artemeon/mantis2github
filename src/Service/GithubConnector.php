@@ -16,7 +16,7 @@ class GithubConnector
 {
     private Client $client;
 
-    public function __construct(private ?ConfigValues $config)
+    public function __construct(?ConfigValues $config)
     {
         if (!$config) {
             return;
@@ -24,7 +24,7 @@ class GithubConnector
         $this->client = new Client([
             'headers' => [
                 'Accept' => 'application/vnd.github.v3+json',
-                'Authorization' => 'token ' . $this->config->getGithubToken(),
+                'Authorization' => 'token ' . $config->getGithubToken(),
             ],
             'verify' => false,
             'base_uri' => 'https://api.github.com/repos/' . $config->getGithubRepo() . '/',
