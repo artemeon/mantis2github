@@ -89,10 +89,12 @@ class ConfigurationCommand extends Command
         );
 
         $parsedUrl = parse_url($mantisUrl);
-        $port = isset($parsedUrl['port']) ? ':' . $parsedUrl['port'] : '';
-        $mantisUrl = "{$parsedUrl['scheme']}://{$parsedUrl['host']}$port/";
+        if ($parsedUrl) {
+            $port = isset($parsedUrl['port']) ? ':' . $parsedUrl['port'] : '';
+            $mantisUrl = "{$parsedUrl['scheme']}://{$parsedUrl['host']}$port/";
 
-        $this->config['mantisUrl'] = $mantisUrl;
+            $this->config['mantisUrl'] = $mantisUrl;
+        }
     }
 
     private function askForMantisToken(): void
@@ -133,6 +135,9 @@ class ConfigurationCommand extends Command
     private function saveConfig(): void
     {
         $stub = file_get_contents(__DIR__ . '/../../stubs/config.yaml.stub');
+        if (!$stub) {
+            return;
+        }
 
         $configContent = preg_replace_callback('/{{([a-z0-9_]+)}}/i', function ($matches) {
             return $this->config[$matches[1]] ?? '';
@@ -153,17 +158,19 @@ HTML
 
     private function readExistingConfigFromPath(): void
     {
-        if (!$this->argument('file')) {
+        $file = $this->argument('file');
+
+        if (!$file) {
             return;
         }
 
-        if (!file_exists($this->argument('file'))) {
+        if (!is_string($file) || !file_exists($file)) {
             $this->error('The given config file does not exist.');
 
             exit(1);
         }
 
-        $config = Yaml::parseFile($this->argument('file'));
+        $config = Yaml::parseFile($file);
 
         if (!$config['MANTIS_URL'] || !$config['MANTIS_TOKEN'] || !$config['GITHUB_TOKEN'] || !$config['GITHUB_REPOSITORY']) {
             $this->error('The given config file is incomplete.');

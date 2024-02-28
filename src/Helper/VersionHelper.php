@@ -16,7 +16,17 @@ class VersionHelper
      */
     public static function getPackageName(): ?string
     {
-        $packageJson = json_decode(file_get_contents(__DIR__ . '/../../composer.json'), true, 512, JSON_THROW_ON_ERROR);
+        $path = __DIR__ . '/../../composer.json';
+        if (!file_exists($path)) {
+            return null;
+        }
+
+        $content = file_get_contents($path);
+        if (!$content) {
+            return null;
+        }
+
+        $packageJson = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
 
         return $packageJson['name'] ?? null;
     }

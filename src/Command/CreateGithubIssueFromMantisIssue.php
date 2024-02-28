@@ -35,8 +35,13 @@ class CreateGithubIssueFromMantisIssue extends Command
         $this->checkConfig();
 
         $this->title('Mantis 2 GitHub Sync');
+        $idsArgument = $this->argument('ids');
 
-        $ids = array_unique($this->argument('ids'));
+        if (!is_array($idsArgument)) {
+            return self::INVALID;
+        }
+
+        $ids = array_unique($idsArgument);
         $message = count($ids) !== 1 ? 'Creating issues ...' : 'Creating issue ...';
 
         $this->newLine();
