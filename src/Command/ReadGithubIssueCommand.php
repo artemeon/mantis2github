@@ -16,9 +16,6 @@ class ReadGithubIssueCommand extends Command
 
     private GithubConnector $githubConnector;
 
-    /**
-     * @param GithubConnector $mantisConnector
-     */
     public function __construct(GithubConnector $mantisConnector)
     {
         parent::__construct();
@@ -69,9 +66,10 @@ HTML
         );
 
         $assignees = array_map(
-            static fn($assignee
+            static fn (
+                $assignee,
             ) => "<a href=\"{$assignee['html_url']}\" class=\"px-1 bg-blue-500 text-black\">{$assignee['login']}</a>",
-            $issue->getAssignees()
+            $issue->getAssignees(),
         );
 
         if (count($assignees)) {
@@ -98,6 +96,7 @@ HTML
         if (count($labels)) {
             $labels = array_map(static function ($label) {
                 style("label-{$label['id']}")->color('#' . $label['color']);
+
                 return "<span class=\"px-1 bg-label-{$label['id']} text-black\">{$label['name']}</span>";
             }, $labels);
 
@@ -136,7 +135,7 @@ HTML
 
         $this->info('Fetching issue details...');
 
-        $issue = $this->githubConnector->readIssue((int)$id);
+        $issue = $this->githubConnector->readIssue((int) $id);
 
         if (!$issue) {
             $this->error('Issue not found.');

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Artemeon\M2G\Command;
 
 use Artemeon\M2G\Helper\VersionHelper;
-
 use Exception;
 use JsonException;
 

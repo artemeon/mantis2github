@@ -37,8 +37,8 @@ class GithubConnector
             $response = $this->client->get(
                 'issues/' . $number,
             );
-            $result = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
-        } catch (GuzzleException | Exception) {
+            $result = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (Exception | GuzzleException) {
             return null;
         }
 
@@ -70,11 +70,11 @@ class GithubConnector
                     ], JSON_THROW_ON_ERROR),
                 ],
             );
-        } catch (GuzzleException | Exception) {
+        } catch (Exception | GuzzleException) {
             return null;
         }
 
-        $result = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        $result = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
 
         return new GithubIssue(
             id: $result['id'],
@@ -95,8 +95,8 @@ class GithubConnector
     {
         try {
             $response = $this->client->get('labels');
-            $result = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
-        } catch (GuzzleException | Exception) {
+            $result = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (Exception | GuzzleException) {
             return [];
         }
 
@@ -116,7 +116,7 @@ class GithubConnector
             ]);
 
             $result = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
-        } catch (GuzzleException | Exception) {
+        } catch (Exception | GuzzleException) {
             return [];
         }
 

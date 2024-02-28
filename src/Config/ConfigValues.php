@@ -12,12 +12,6 @@ class ConfigValues
     private string $githubToken;
     private string $githubRepo;
 
-    /**
-     * @param string $mantisUrl
-     * @param string $mantisToken
-     * @param string $githubToken
-     * @param string $githubRepo
-     */
     public function __construct(string $mantisUrl, string $mantisToken, string $githubToken, string $githubRepo)
     {
         $this->mantisUrl = $mantisUrl;

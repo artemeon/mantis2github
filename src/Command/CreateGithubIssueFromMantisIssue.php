@@ -8,7 +8,6 @@ use Artemeon\M2G\Dto\GithubIssue;
 use Artemeon\M2G\Service\GithubConnector;
 use Artemeon\M2G\Service\MantisConnector;
 use JsonException;
-use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Helper\Table;
 
 class CreateGithubIssueFromMantisIssue extends Command
@@ -48,11 +47,11 @@ class CreateGithubIssueFromMantisIssue extends Command
 
         $issues = [];
 
-        $this->spin(function () use ($ids, &$issues) {
+        $this->spin(function () use ($ids, &$issues): void {
             $labels = array_map(static fn ($label) => $label['name'], $this->githubConnector->getLabels());
 
             foreach ($ids as $id) {
-                $mantisIssue = $this->mantisConnector->readIssue((int)$id);
+                $mantisIssue = $this->mantisConnector->readIssue((int) $id);
 
                 if ($mantisIssue === null) {
                     $issues[] = [
@@ -61,6 +60,7 @@ class CreateGithubIssueFromMantisIssue extends Command
                         'message' => '<error>Mantis issue not found.</error>',
                         'issue' => '',
                     ];
+
                     continue;
                 }
 
@@ -80,11 +80,12 @@ class CreateGithubIssueFromMantisIssue extends Command
                         'message' => '<error>GitHub issue could not be created.</error>',
                         'issue' => '',
                     ];
+
                     continue;
                 }
 
                 $mantisIssue->setUpstreamTicket(
-                    trim($mantisIssue->getUpstreamTicket() . ' ' . $newGithubIssue->getIssueUrl())
+                    trim($mantisIssue->getUpstreamTicket() . ' ' . $newGithubIssue->getIssueUrl()),
                 );
                 $patched = $this->mantisConnector->patchUpstreamField($mantisIssue);
 
@@ -95,6 +96,7 @@ class CreateGithubIssueFromMantisIssue extends Command
                         'message' => '<error>Upstream ticket URL could not be updated.</error>',
                         'issue' => '',
                     ];
+
                     continue;
                 }
 

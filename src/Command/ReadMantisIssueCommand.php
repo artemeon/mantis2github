@@ -114,7 +114,7 @@ HTML
 
         $this->info('Fetching issue details...');
 
-        $issue = $this->mantisConnector->readIssue((int)$id);
+        $issue = $this->mantisConnector->readIssue((int) $id);
 
         if (!$issue) {
             $this->error('Issue not found.');

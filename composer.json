@@ -6,7 +6,9 @@
         "bin/mantis2github"
     ],
     "scripts": {
-        "phpstan": "php ./vendor/bin/phpstan analyse --memory-limit=4G"
+        "phpstan": "php ./vendor/bin/phpstan analyse --memory-limit=4G",
+        "pint": "php ./vendor/bin/pint --test -v",
+        "pint:fix": "php ./vendor/bin/pint -v"
     },
     "authors": [
         {
@@ -36,6 +38,7 @@
     },
     "require-dev": {
         "roave/security-advisories": "dev-latest",
-        "phpstan/phpstan": "^1.10.59"
+        "phpstan/phpstan": "^1.10.59",
+        "laravel/pint": "^1.14"
     }
 }

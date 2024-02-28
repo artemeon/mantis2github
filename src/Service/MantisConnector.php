@@ -44,7 +44,7 @@ class MantisConnector
 
             $response = $this->client->get($query ? '?' . $query : '');
             $result = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
-        } catch (GuzzleException | Exception) {
+        } catch (Exception | GuzzleException) {
             return [];
         }
 
@@ -60,8 +60,8 @@ class MantisConnector
     {
         try {
             $response = $this->client->get((string) $number);
-            $result = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
-        } catch (GuzzleException | Exception) {
+            $result = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (Exception | GuzzleException) {
             return null;
         }
 
@@ -92,8 +92,9 @@ class MantisConnector
                     'body' => $body,
                 ],
             );
+
             return true;
-        } catch (GuzzleException | Exception) {
+        } catch (Exception | GuzzleException) {
             return false;
         }
     }
