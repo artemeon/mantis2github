@@ -11,6 +11,7 @@ interface ConverterInterface
 {
     /**
      * @param MantisIssue[] $mantisIssues
+     * @param array<string, mixed> $githubResult
      */
     public static function convert(IssuesListCommand $command, array $mantisIssues, array $githubResult): void;
 }

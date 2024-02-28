@@ -6,6 +6,9 @@ namespace Artemeon\M2G\Helper;
 
 class UpstreamIssueParser
 {
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     public static function parse(string $input): array
     {
         if (!$input) {

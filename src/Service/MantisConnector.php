@@ -97,6 +97,9 @@ class MantisConnector
         }
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     private function mapIssue(array $data, string $status = 'name'): MantisIssue
     {
         $mantisBaseUrl = $this->config->getMantisUrl();
@@ -119,6 +122,9 @@ class MantisConnector
         return $issue;
     }
 
+    /**
+     * @param array<string, mixed> $issue
+     */
     private function updateUpstreamFieldsIssue(array $issue, MantisIssue $mantisIssue): void
     {
         foreach ($issue['custom_fields'] as $field) {

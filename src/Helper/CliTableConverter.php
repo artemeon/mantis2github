@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Artemeon\M2G\Helper;
 
 use Artemeon\M2G\Command\IssuesListCommand;
-use Artemeon\M2G\Dto\MantisIssue;
 
 class CliTableConverter implements ConverterInterface
 {

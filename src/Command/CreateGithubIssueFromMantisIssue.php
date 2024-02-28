@@ -62,7 +62,7 @@ class CreateGithubIssueFromMantisIssue extends Command
                 $newGithubIssue = GithubIssue::fromMantisIssue($mantisIssue);
 
                 $filteredLabels = array_values(
-                    array_filter($labels, static fn ($label) => strtolower($label) === strtolower($mantisIssue->getProject())),
+                    array_filter($labels, static fn (string $label) => strtolower($label) === strtolower($mantisIssue->getProject())),
                 );
 
                 $newGithubIssue->setLabels($filteredLabels);

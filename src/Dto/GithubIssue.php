@@ -6,6 +6,10 @@ namespace Artemeon\M2G\Dto;
 
 class GithubIssue
 {
+    /**
+     * @param array<int, array<string, mixed>> $assignees
+     * @param array<int, array<string, mixed>> $labels
+     */
     public function __construct(
         private ?int $id = null,
         private ?int $number = null,
@@ -58,11 +62,17 @@ class GithubIssue
         return $this->state;
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     final public function getAssignees(): array
     {
         return $this->assignees;
     }
 
+    /**
+     * @param array<int, array<string, mixed>> $labels
+     */
     final public function setLabels(array $labels = []): self
     {
         $this->labels = $labels;
@@ -70,8 +80,11 @@ class GithubIssue
         return $this;
     }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
     final public function getLabels(): array
     {
-        return $this->labels ?? [];
+        return $this->labels;
     }
 }

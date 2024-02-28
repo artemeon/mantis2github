@@ -15,6 +15,10 @@ class ConfigurationCommand extends Command
     protected ?string $description = 'Configure the tool';
 
     protected string $configPath = __DIR__ . '/../../../config.yaml';
+
+    /**
+     * @var array<string, mixed>
+     */
     protected array $config = [];
 
     public function __invoke(): int

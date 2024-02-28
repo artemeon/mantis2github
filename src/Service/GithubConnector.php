@@ -88,6 +88,9 @@ class GithubConnector
         );
     }
 
+    /**
+     * @return array<int, mixed>
+     */
     final public function getLabels(): array
     {
         try {
@@ -100,6 +103,9 @@ class GithubConnector
         return $result ?: [];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     final public function graphql(string $query): array
     {
         try {
