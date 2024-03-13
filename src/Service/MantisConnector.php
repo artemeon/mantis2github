@@ -19,16 +19,13 @@ class MantisConnector
 
     public function __construct(private ?ConfigValues $config)
     {
-        if (!$this->config) {
-            return;
-        }
         $this->client = new Client([
             'headers' => [
-                'Authorization' => $this->config->getMantisToken(),
+                'Authorization' => $this->config?->getMantisToken(),
                 'Content-Type' => 'application/json',
             ],
             'verify' => false,
-            'base_uri' => rtrim($this->config->getMantisUrl(), '/') . '/api/rest/issues/',
+            'base_uri' => rtrim($this->config?->getMantisUrl() ?? '', '/') . '/api/rest/issues/',
         ]);
     }
 

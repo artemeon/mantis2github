@@ -52,7 +52,17 @@ class VersionHelper
             return null;
         }
 
-        return $packagist->getLatestRelease($packageName)['version'] ?? null;
+        $latestRelease = $packagist->getLatestRelease($packageName);
+        if (!is_array($latestRelease) || !array_key_exists('version', $latestRelease)) {
+            return null;
+        }
+
+        $version = $latestRelease['version'] ?? null;
+        if (!is_string($version)) {
+            return null;
+        }
+
+        return $version;
     }
 
     /**

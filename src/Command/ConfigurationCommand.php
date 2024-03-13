@@ -71,7 +71,7 @@ class ConfigurationCommand extends Command
             label: 'The URL of your Mantis installation',
             placeholder: 'E.g. https://tickets.company.tld/',
             required: true,
-            validate: function ($value) {
+            validate: function (string $value) {
                 $parsedUrl = parse_url($value);
 
                 if ($parsedUrl === false) {
@@ -124,7 +124,7 @@ class ConfigurationCommand extends Command
         $this->config['githubToken'] = $this->password(
             label: 'GitHub Personal Access Token',
             required: true,
-            validate: fn ($value) => !str_starts_with($value, 'ghp_') && str_starts_with($value, 'github_pat_')
+            validate: fn (string $value) => !str_starts_with($value, 'ghp_') && str_starts_with($value, 'github_pat_')
                 ? 'The provided value is not a valid GitHub PAT.'
                 : null,
         );
@@ -136,7 +136,7 @@ class ConfigurationCommand extends Command
             label: 'GitHub Repository(e.g. user/repository)',
             placeholder: 'E.g. user/repository',
             required: true,
-            validate: fn ($value) => count(explode('/', $value)) !== 2
+            validate: fn (string $value) => count(explode('/', $value)) !== 2
                 ? 'Invalid repository name.'
                 : null,
         );

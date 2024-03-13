@@ -3,5 +3,8 @@ includes:
 
 parameters:
     level: 9
+    checkUninitializedProperties: true
+    checkImplicitMixed: true
+    rememberPossiblyImpureFunctionValues: false
     paths:
         - src

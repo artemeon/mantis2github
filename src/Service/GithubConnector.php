@@ -18,16 +18,13 @@ class GithubConnector
 
     public function __construct(?ConfigValues $config)
     {
-        if (!$config) {
-            return;
-        }
         $this->client = new Client([
             'headers' => [
                 'Accept' => 'application/vnd.github.v3+json',
-                'Authorization' => 'token ' . $config->getGithubToken(),
+                'Authorization' => 'token ' . $config?->getGithubToken(),
             ],
             'verify' => false,
-            'base_uri' => 'https://api.github.com/repos/' . $config->getGithubRepo() . '/',
+            'base_uri' => 'https://api.github.com/repos/' . $config?->getGithubRepo() . '/',
         ]);
     }
 

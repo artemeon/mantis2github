@@ -77,7 +77,7 @@ $issueFragment
 GRAPHQL;
 
         /** @var array{ repository: array<string, array{ title: string, url: string, closed: bool }> } $result */
-        $result = $this->githubConnector->graphql($query);
+        $result = $this->githubConnector->graphql($query)['data'];
         $githubResult = $result['repository'];
 
         switch ($this->option('output')) {
