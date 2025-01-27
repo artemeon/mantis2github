@@ -6,7 +6,6 @@ namespace Artemeon\M2G\Command;
 
 use Artemeon\Console\Command as BaseCommand;
 use Artemeon\M2G\Config\ConfigReader;
-use Artemeon\M2G\Config\ConfigValues;
 
 class Command extends BaseCommand
 {
@@ -27,15 +26,14 @@ class Command extends BaseCommand
     final public function checkConfig(): void
     {
         $config = (new ConfigReader())->read();
-        if ($config instanceof ConfigValues) {
-            return;
+
+        if (!$config) {
+            $this->newLine();
+            $this->warn('You have not configured mantis2github yet');
+            $this->warn('Please run "mantis2github configure" to get started');
+            $this->newLine();
+
+            exit(self::INVALID);
         }
-
-        $this->newLine();
-        $this->warn('You have not configured mantis2github yet');
-        $this->warn('Please run "mantis2github configure" to get started');
-        $this->newLine();
-
-        exit(self::INVALID);
     }
 }

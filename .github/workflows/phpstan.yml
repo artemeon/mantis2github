@@ -6,4 +6,4 @@ on:
             - dev/2.x
 jobs:
     phpstan:
-        uses: artemeon/.shared/.github/workflows/phpstan-php84-upwards.yml@main
+        uses: artemeon/.shared/.github/workflows/phpstan.yml@main

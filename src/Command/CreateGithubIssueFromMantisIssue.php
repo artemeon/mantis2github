@@ -16,9 +16,14 @@ class CreateGithubIssueFromMantisIssue extends Command
 
     protected ?string $description = 'Synchronize a list of Mantis issues to GitHub';
 
-    public function __construct(private MantisConnector $mantisConnector, private GithubConnector $githubConnector)
+    private GithubConnector $githubConnector;
+    private MantisConnector $mantisConnector;
+
+    public function __construct(MantisConnector $mantisConnector, GithubConnector $githubConnector)
     {
         parent::__construct();
+        $this->mantisConnector = $mantisConnector;
+        $this->githubConnector = $githubConnector;
     }
 
     /**

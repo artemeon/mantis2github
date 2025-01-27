@@ -14,9 +14,12 @@ class ReadMantisIssueCommand extends Command
     protected string $signature = 'read:mantis {id : The issue ID}';
     protected ?string $description = 'Read details of a Mantis issue';
 
-    public function __construct(private MantisConnector $mantisConnector)
+    private MantisConnector $mantisConnector;
+
+    public function __construct(MantisConnector $mantisConnector)
     {
         parent::__construct();
+        $this->mantisConnector = $mantisConnector;
     }
 
     public function __invoke(): int
@@ -113,7 +116,7 @@ HTML
 
         $issue = $this->mantisConnector->readIssue((int) $id);
 
-        if ($issue === null) {
+        if (!$issue) {
             $this->error('Issue not found.');
 
             exit(1);

@@ -14,9 +14,12 @@ class ReadGithubIssueCommand extends Command
     protected string $signature = 'read:github {id : GitHub issue ID}';
     protected ?string $description = 'Read details of a GitHub issue';
 
-    public function __construct(private GithubConnector $githubConnector)
+    private GithubConnector $githubConnector;
+
+    public function __construct(GithubConnector $mantisConnector)
     {
         parent::__construct();
+        $this->githubConnector = $mantisConnector;
     }
 
     public function __invoke(): int
@@ -134,7 +137,7 @@ HTML
 
         $issue = $this->githubConnector->readIssue((int) $id);
 
-        if ($issue === null) {
+        if (!$issue) {
             $this->error('Issue not found.');
 
             if (empty($this->argument('id'))) {
