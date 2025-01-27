@@ -6,18 +6,8 @@ namespace Artemeon\M2G\Config;
 
 class ConfigValues
 {
-    private string $mantisUrl;
-    private string $mantisToken;
-
-    private string $githubToken;
-    private string $githubRepo;
-
-    public function __construct(string $mantisUrl, string $mantisToken, string $githubToken, string $githubRepo)
+    public function __construct(private string $mantisUrl, private string $mantisToken, private string $githubToken, private string $githubRepo)
     {
-        $this->mantisUrl = $mantisUrl;
-        $this->mantisToken = $mantisToken;
-        $this->githubToken = $githubToken;
-        $this->githubRepo = $githubRepo;
     }
 
     final public function getMantisUrl(): string

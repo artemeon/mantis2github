@@ -32,7 +32,7 @@ class MantisConnector
     /**
      * @return MantisIssue[]
      */
-    final public function fetchIssues(int $filterId = null): array
+    final public function fetchIssues(?int $filterId = null): array
     {
         try {
             $query = http_build_query(array_filter([
@@ -40,7 +40,7 @@ class MantisConnector
                 'page_size' => 400,
             ], static fn (mixed $value) => $value !== null));
 
-            $response = $this->client->get($query ? '?' . $query : '');
+            $response = $this->client->get($query !== '' && $query !== '0' ? '?' . $query : '');
             /**
              * @var array{
              *     issues: array{
@@ -187,7 +187,7 @@ class MantisConnector
      */
     private function mapIssue(array $data, #[ExpectedValues(['name', 'label'])] string $status = 'name'): MantisIssue
     {
-        if (!$this->config) {
+        if ($this->config === null) {
             throw new RuntimeException('Config is missing.');
         }
 

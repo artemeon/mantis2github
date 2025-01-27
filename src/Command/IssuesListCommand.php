@@ -16,22 +16,14 @@ class IssuesListCommand extends Command
     protected string $signature = 'issues:list {--output= : Output Format}';
     protected ?string $description = 'Get a list of Mantis Tickets with their associated GitHub Issues.';
 
-    private MantisConnector $mantisConnector;
-    private GithubConnector $githubConnector;
-    private ?ConfigValues $config;
-
-    public function __construct(MantisConnector $mantisConnector, GithubConnector $githubConnector, ?ConfigValues $config)
+    public function __construct(private MantisConnector $mantisConnector, private GithubConnector $githubConnector, private ?ConfigValues $config)
     {
         parent::__construct();
-
-        $this->mantisConnector = $mantisConnector;
-        $this->githubConnector = $githubConnector;
-        $this->config = $config;
     }
 
     public function __invoke(): int
     {
-        if (!$this->config) {
+        if ($this->config === null) {
             return self::INVALID;
         }
 
@@ -80,14 +72,10 @@ GRAPHQL;
         $result = $this->githubConnector->graphql($query)['data'];
         $githubResult = $result['repository'];
 
-        switch ($this->option('output')) {
-            case 'html':
-                HtmlTableConverter::convert($this, $mantisIssues, $githubResult);
-
-                break;
-            default:
-                CliTableConverter::convert($this, $mantisIssues, $githubResult);
-        }
+        match ($this->option('output')) {
+            'html' => HtmlTableConverter::convert($this, $mantisIssues, $githubResult),
+            default => CliTableConverter::convert($this, $mantisIssues, $githubResult),
+        };
 
         return self::SUCCESS;
     }
