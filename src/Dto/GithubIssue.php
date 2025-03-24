@@ -34,7 +34,7 @@ class GithubIssue
         $issueBadge = '[![MANTIS-' . $issue->getId() . '](https://img.shields.io/badge/MANTIS-' . $issue->getId() . '-green?style=for-the-badge)](' . $issue->getIssueUrl() . ')';
 
         return new self(
-            title: '[MANTIS-' . $issue->getId() . '] [' . $issue->getProject() . '] ' . $issue->getSummary(),
+            title: $issue->getSummary() . '[' . $issue->getProject() . '] [MANTIS-' . $issue->getId() . ']',
             description: $issue->getDescription() . PHP_EOL . PHP_EOL . $issueBadge,
         );
     }
