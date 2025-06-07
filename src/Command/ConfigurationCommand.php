@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Artemeon\M2G\Command;
 
+use Artemeon\M2G\Config\ConfigValues;
 use Artemeon\M2G\Config\ConfigReader;
 use Symfony\Component\Yaml\Yaml;
 
@@ -12,6 +13,7 @@ use function Termwind\{render, terminal};
 class ConfigurationCommand extends Command
 {
     protected string $signature = 'configure {file? : The config.yaml to use for setting up the tool.}';
+
     protected ?string $description = 'Configure the tool';
 
     protected string $configPath = __DIR__ . '/../../../config.yaml';
@@ -41,7 +43,7 @@ class ConfigurationCommand extends Command
 
         $hasConfig = (new ConfigReader())->read();
 
-        if ($hasConfig !== null) {
+        if ($hasConfig instanceof ConfigValues) {
             $this->warn('Configuration file already exists');
             $this->warn('If you continue your configuration will be overwritten');
 
@@ -71,7 +73,7 @@ class ConfigurationCommand extends Command
             label: 'The URL of your Mantis installation',
             placeholder: 'E.g. https://tickets.company.tld/',
             required: true,
-            validate: static function (string $value) {
+            validate: static function (string $value): ?string {
                 $parsedUrl = parse_url($value);
 
                 if ($parsedUrl === false) {
@@ -87,10 +89,10 @@ class ConfigurationCommand extends Command
                 }
 
                 $port = isset($parsedUrl['port']) ? ':' . $parsedUrl['port'] : '';
-                $mantisUrl = "{$parsedUrl['scheme']}://{$parsedUrl['host']}$port/";
+                $mantisUrl = sprintf('%s://%s%s/', $parsedUrl['scheme'], $parsedUrl['host'], $port);
 
                 $headers = @get_headers($mantisUrl);
-                if (!$headers || $headers[0] === 'HTTP/1.1 404 Not Found') {
+                if ($headers === [] || $headers === false || $headers[0] === 'HTTP/1.1 404 Not Found') {
                     return 'The given URL is unreachable. If this error persists, please check your internet connection.';
                 }
 
@@ -101,7 +103,7 @@ class ConfigurationCommand extends Command
         $parsedUrl = parse_url($mantisUrl);
         if ($parsedUrl) {
             $port = isset($parsedUrl['port']) ? ':' . $parsedUrl['port'] : '';
-            $mantisUrl = "{$parsedUrl['scheme']}://{$parsedUrl['host']}$port/";
+            $mantisUrl = sprintf('%s://%s%s/', $parsedUrl['scheme'], $parsedUrl['host'], $port);
 
             $this->config['mantisUrl'] = $mantisUrl;
         }
@@ -109,7 +111,7 @@ class ConfigurationCommand extends Command
 
     private function askForMantisToken(): void
     {
-        $this->info("Head over to {$this->config['mantisUrl']}api_tokens_page.php and create a new API token.");
+        $this->info(sprintf('Head over to %sapi_tokens_page.php and create a new API token.', $this->config['mantisUrl']));
 
         $this->config['mantisToken'] = $this->password(
             label: 'Mantis API Token',
@@ -124,7 +126,7 @@ class ConfigurationCommand extends Command
         $this->config['githubToken'] = $this->password(
             label: 'GitHub Personal Access Token',
             required: true,
-            validate: static fn (string $value) => !str_starts_with($value, 'ghp_') && str_starts_with($value, 'github_pat_')
+            validate: static fn (string $value): ?string => !str_starts_with($value, 'ghp_') && str_starts_with($value, 'github_pat_')
                 ? 'The provided value is not a valid GitHub PAT.'
                 : null,
         );
@@ -136,7 +138,7 @@ class ConfigurationCommand extends Command
             label: 'GitHub Repository(e.g. user/repository)',
             placeholder: 'E.g. user/repository',
             required: true,
-            validate: static fn (string $value) => count(explode('/', $value)) !== 2
+            validate: static fn (string $value): ?string => count(explode('/', $value)) !== 2
                 ? 'Invalid repository name.'
                 : null,
         );
@@ -145,7 +147,7 @@ class ConfigurationCommand extends Command
     private function saveConfig(): void
     {
         $stub = file_get_contents(__DIR__ . '/../../stubs/config.yaml.stub');
-        if (!$stub) {
+        if ($stub === '' || $stub === '0' || $stub === false) {
             return;
         }
 
@@ -168,7 +170,7 @@ HTML
     {
         $file = $this->argument('file');
 
-        if (!$file) {
+        if ($file === false || ($file === '' || $file === '0') || $file === [] || $file === null) {
             return;
         }
 

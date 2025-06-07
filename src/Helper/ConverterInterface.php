@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Artemeon\M2G\Helper;
 
 use Artemeon\M2G\Command\IssuesListCommand;
-use Artemeon\M2G\Dto\MantisIssue;
+use Artemeon\M2G\Dto\MantisTicket;
 
 interface ConverterInterface
 {
     /**
-     * @param MantisIssue[] $mantisIssues
-     * @param array<string, mixed> $githubResult
+     * @param MantisTicket[] $tickets
+     * @param array<string, mixed> $githubIssue
      */
-    public static function convert(IssuesListCommand $command, array $mantisIssues, array $githubResult): void;
+    public static function convert(IssuesListCommand $issuesListCommand, array $tickets, array $githubIssue): void;
 }

@@ -12,9 +12,10 @@ use function Termwind\{render, style, terminal};
 class ReadGithubIssueCommand extends Command
 {
     protected string $signature = 'read:github {id : GitHub issue ID}';
+
     protected ?string $description = 'Read details of a GitHub issue';
 
-    public function __construct(private GithubConnector $githubConnector)
+    public function __construct(private readonly GithubConnector $githubConnector)
     {
         parent::__construct();
     }
@@ -25,11 +26,11 @@ class ReadGithubIssueCommand extends Command
 
         $this->title('GitHub Issue Details');
 
-        $issue = $this->fetchIssueDetails();
+        $githubIssue = $this->fetchIssueDetails();
 
         terminal()->clear();
 
-        if ($issue->getState() === 'open') {
+        if ($githubIssue->getState() === 'open') {
             render(
                 <<<HTML
 <div class="my-1 mx-2 px-1 bg-green-500 text-white font-bold">
@@ -37,7 +38,7 @@ class ReadGithubIssueCommand extends Command
 </div>
 HTML
             );
-        } elseif ($issue->getState() === 'closed') {
+        } elseif ($githubIssue->getState() === 'closed') {
             render(
                 <<<HTML
 <div class="my-1 mx-2 px-1 bg-purple-500 text-white font-bold">
@@ -50,14 +51,14 @@ HTML
         render(
             <<<HTML
 <div class="mx-2 mb-1 font-bold">
-    {$issue->getTitle()}
+    {$githubIssue->getTitle()}
 </div>
 HTML
         );
         render(
             <<<HTML
 <div class="mx-2 mb-1">
-    {$issue->getIssueUrl()}
+    {$githubIssue->getIssueUrl()}
 </div>
 HTML
         );
@@ -65,11 +66,11 @@ HTML
         $assignees = array_map(
             static fn (
                 $assignee,
-            ) => "<a href=\"{$assignee['html_url']}\" class=\"px-1 bg-blue-500 text-black\">{$assignee['login']}</a>",
-            $issue->getAssignees(),
+            ): string => sprintf('<a href="%s" class="px-1 bg-blue-500 text-black">%s</a>', $assignee['html_url'], $assignee['login']),
+            $githubIssue->getAssignees(),
         );
 
-        if (count($assignees)) {
+        if ($assignees !== []) {
             $text = 'Assignee' . (count($assignees) > 1 ? 's' : '') . ':';
             render(
                 <<<HTML
@@ -82,19 +83,19 @@ HTML
             render(
                 <<<HTML
 <div class="mx-2 mb-1">
-    $assigneesHtml
+    {$assigneesHtml}
 </div>
 HTML
             );
         }
 
-        $labels = $issue->getLabels();
+        $labels = $githubIssue->getLabels();
 
-        if (count($labels)) {
-            $labels = array_map(static function ($label) {
-                style("label-{$label['id']}")->color('#' . $label['color']);
+        if ($labels !== []) {
+            $labels = array_map(static function (array $label): string {
+                style('label-' . $label['id'])->color('#' . $label['color']);
 
-                return "<span class=\"px-1 bg-label-{$label['id']} text-black\">{$label['name']}</span>";
+                return sprintf('<span class="px-1 bg-label-%s text-black">%s</span>', $label['id'], $label['name']);
             }, $labels);
 
             $text = 'Label' . (count($labels) > 1 ? 's' : '') . ':';
@@ -111,7 +112,7 @@ HTML
             render(
                 <<<HTML
 <div class="mx-2 mb-1">
-    $labelsHtml
+    {$labelsHtml}
 </div>
 HTML
             );
@@ -134,10 +135,10 @@ HTML
 
         $issue = $this->githubConnector->readIssue((int) $id);
 
-        if ($issue === null) {
+        if (!$issue instanceof GithubIssue) {
             $this->error('Issue not found.');
 
-            if (empty($this->argument('id'))) {
+            if ($this->argument('id') === false || in_array($this->argument('id'), ['', '0'], true) || $this->argument('id') === [] || $this->argument('id') === null) {
                 $this->fetchIssueDetails();
             }
 

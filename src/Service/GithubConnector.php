@@ -14,17 +14,17 @@ use JsonException;
 
 class GithubConnector
 {
-    private Client $client;
+    private readonly Client $client;
 
-    public function __construct(?ConfigValues $config)
+    public function __construct(?ConfigValues $configValues)
     {
         $this->client = new Client([
             'headers' => [
                 'Accept' => 'application/vnd.github.v3+json',
-                'Authorization' => 'token ' . $config?->getGithubToken(),
+                'Authorization' => 'token ' . $configValues?->githubToken,
             ],
             'verify' => false,
-            'base_uri' => 'https://api.github.com/repos/' . $config?->getGithubRepo() . '/',
+            'base_uri' => 'https://api.github.com/repos/' . $configValues?->githubRepo . '/',
         ]);
     }
 
@@ -73,16 +73,16 @@ class GithubConnector
     /**
      * @throws JsonException
      */
-    final public function createIssue(GithubIssue $issue): ?GithubIssue
+    final public function createIssue(GithubIssue $githubIssue): ?GithubIssue
     {
         try {
             $response = $this->client->post(
                 'issues',
                 [
                     'body' => json_encode([
-                        'title' => $issue->getTitle(),
-                        'body' => $issue->getDescription(),
-                        'labels' => $issue->getLabels(),
+                        'title' => $githubIssue->getTitle(),
+                        'body' => $githubIssue->getDescription(),
+                        'labels' => $githubIssue->getLabels(),
                     ], JSON_THROW_ON_ERROR),
                 ],
             );

@@ -14,7 +14,7 @@ class UpstreamIssueParser
      */
     public static function parse(?string $input): array
     {
-        if (!$input) {
+        if ($input === null || $input === '' || $input === '0') {
             return [];
         }
 
@@ -29,7 +29,7 @@ class UpstreamIssueParser
                 continue;
             }
 
-            if (!preg_match('/\/issues\/(\d+)$/', $trimmedPart, $matches)) {
+            if (in_array(preg_match('/\/issues\/(\d+)$/', $trimmedPart, $matches), [0, false], true)) {
                 continue;
             }
 

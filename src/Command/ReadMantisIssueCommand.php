@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Artemeon\M2G\Command;
 
-use Artemeon\M2G\Dto\MantisIssue;
+use Artemeon\M2G\Dto\MantisTicket;
 use Artemeon\M2G\Service\MantisConnector;
 
 use function Termwind\{render, terminal};
@@ -12,9 +12,10 @@ use function Termwind\{render, terminal};
 class ReadMantisIssueCommand extends Command
 {
     protected string $signature = 'read:mantis {id : The issue ID}';
+
     protected ?string $description = 'Read details of a Mantis issue';
 
-    public function __construct(private MantisConnector $mantisConnector)
+    public function __construct(private readonly MantisConnector $mantisConnector)
     {
         parent::__construct();
     }
@@ -25,15 +26,15 @@ class ReadMantisIssueCommand extends Command
 
         $this->title('Mantis Issue Details');
 
-        $issue = $this->fetchIssueDetails();
+        $mantisIssue = $this->fetchIssueDetails();
 
         terminal()->clear();
 
-        if (in_array($issue->getResolution(), ['open', 'reopened'])) {
+        if (in_array($mantisIssue->getResolution(), ['open', 'reopened'])) {
             render(
                 <<<HTML
 <div class="my-1 mx-2 px-1 bg-green-500 text-white font-bold">
-    Issue is {$issue->getResolution()}
+    Issue is {$mantisIssue->getResolution()}
 </div>
 HTML
             );
@@ -41,7 +42,7 @@ HTML
             render(
                 <<<HTML
 <div class="my-1 mx-2 px-1 bg-purple-500 text-white font-bold">
-    Issue is {$issue->getResolution()}
+    Issue is {$mantisIssue->getResolution()}
 </div>
 HTML
             );
@@ -50,19 +51,19 @@ HTML
         render(
             <<<HTML
 <div class="mx-2 mb-1 font-bold">
-    [{$issue->getProject()}] {$issue->getSummary()}
+    [{$mantisIssue->getProject()}] {$mantisIssue->getSummary()}
 </div>
 HTML
         );
         render(
             <<<HTML
 <div class="mx-2 mb-1">
-    {$issue->getIssueUrl()}
+    {$mantisIssue->getIssueUrl()}
 </div>
 HTML
         );
 
-        if ($issue->getUpstreamTicket()) {
+        if (!in_array($mantisIssue->getUpstreamTicket(), [null, '', '0'], true)) {
             render(
                 <<<HTML
 <div class="mx-2 mb-1 font-bold">
@@ -73,13 +74,13 @@ HTML
             render(
                 <<<HTML
 <div class="mx-2 mb-1">
-    {$issue->getUpstreamTicket()}
+    {$mantisIssue->getUpstreamTicket()}
 </div>
 HTML
             );
         }
 
-        if ($issue->getAssignee()) {
+        if (!in_array($mantisIssue->getAssignee(), [null, '', '0'], true)) {
             render(
                 <<<HTML
 <div class="mx-2 mb-1 font-bold">
@@ -90,7 +91,7 @@ HTML
             render(
                 <<<HTML
 <div class="mx-2 mb-1">
-    {$issue->getAssignee()}
+    {$mantisIssue->getAssignee()}
 </div>
 HTML
             );
@@ -99,7 +100,7 @@ HTML
         return self::SUCCESS;
     }
 
-    private function fetchIssueDetails(): MantisIssue
+    private function fetchIssueDetails(): MantisTicket
     {
         $id = $this->argument('id');
 
@@ -113,7 +114,7 @@ HTML
 
         $issue = $this->mantisConnector->readIssue((int) $id);
 
-        if ($issue === null) {
+        if (!$issue instanceof MantisTicket) {
             $this->error('Issue not found.');
 
             exit(1);

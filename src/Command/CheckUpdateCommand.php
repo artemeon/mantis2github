@@ -13,7 +13,9 @@ use function Termwind\{render};
 class CheckUpdateCommand extends Command
 {
     protected string $signature = 'check_update';
+
     protected ?string $description = 'Checks whether a new version is available';
+
     protected bool $hidden = true;
 
     /**
@@ -33,12 +35,12 @@ class CheckUpdateCommand extends Command
 <table>
     <thead>
         <tr>
-            <th>Update available! $currentVersion -> $latestVersion</th>
+            <th>Update available! {$currentVersion} -> {$latestVersion}</th>
         </tr>
     </thead>
     <tbody>
         <tr>
-            <td><br>Please run:<br><br><code class="font-bold">composer global update $name</code><br></td>
+            <td><br>Please run:<br><br><code class="font-bold">composer global update {$name}</code><br></td>
         </tr>
     </tbody>
 </table>

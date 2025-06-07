@@ -13,33 +13,33 @@ class CliTableConverter implements ConverterInterface
      *     url: string,
      *     title: string,
      *     closed: bool,
-     * }> $githubResult
+     * }> $githubIssue
      */
-    public static function convert(IssuesListCommand $command, array $mantisIssues, array $githubResult): void
+    public static function convert(IssuesListCommand $issuesListCommand, array $tickets, array $githubIssue): void
     {
         $rows = [];
 
-        foreach ($mantisIssues as $issue) {
-            $githubIssues = array_map(static function (array $data) use ($githubResult) {
+        foreach ($tickets as $ticket) {
+            $githubIssues = array_map(static function (array $data) use ($githubIssue): string {
                 $status = 'open';
-                if ($githubResult['issue' . $data['id']]['closed']) {
+                if ($githubIssue['issue' . $data['id']]['closed']) {
                     $status = 'closed';
                 }
 
                 return '#' . $data['id'] . ' (' . $status . ')';
-            }, UpstreamIssueParser::parse($issue->getUpstreamTicket()));
+            }, UpstreamIssueParser::parse($ticket->getUpstreamTicket()));
 
             $rows[] = [
-                $issue->getId(),
-                $issue->getProject(),
-                $issue->getSummary(),
-                $issue->getAssignee(),
-                $issue->getStatus(),
+                $ticket->getId(),
+                $ticket->getProject(),
+                $ticket->getSummary(),
+                $ticket->getAssignee(),
+                $ticket->getStatus(),
                 implode(', ', $githubIssues),
             ];
         }
 
         $headers = ['ID', 'Project', 'Summary', 'Assignee', 'Status', 'Upstream'];
-        $command->table($headers, $rows);
+        $issuesListCommand->table($headers, $rows);
     }
 }

@@ -18,24 +18,24 @@ class GithubIssue
      * }[] $labels
      */
     public function __construct(
-        private ?int $id = null,
-        private ?int $number = null,
-        private ?string $title = null,
-        private ?string $description = null,
-        private ?string $issueUrl = null,
-        private string $state = 'open',
-        private array $assignees = [],
+        private readonly ?int $id = null,
+        private readonly ?int $number = null,
+        private readonly ?string $title = null,
+        private readonly ?string $description = null,
+        private readonly ?string $issueUrl = null,
+        private readonly string $state = 'open',
+        private readonly array $assignees = [],
         private array $labels = [],
     ) {
     }
 
-    public static function fromMantisIssue(MantisIssue $issue): GithubIssue
+    public static function fromMantisIssue(MantisTicket $mantisIssue): GithubIssue
     {
-        $issueBadge = '[![MANTIS-' . $issue->getId() . '](https://img.shields.io/badge/MANTIS-' . $issue->getId() . '-green?style=for-the-badge)](' . $issue->getIssueUrl() . ')';
+        $issueBadge = '[![MANTIS-' . $mantisIssue->getId() . '](https://img.shields.io/badge/MANTIS-' . $mantisIssue->getId() . '-green?style=for-the-badge)](' . $mantisIssue->getIssueUrl() . ')';
 
         return new self(
-            title: $issue->getSummary() . ' [' . $issue->getProject() . '] [MANTIS-' . $issue->getId() . ']',
-            description: $issue->getDescription() . PHP_EOL . PHP_EOL . $issueBadge,
+            title: $mantisIssue->getSummary() . ' [' . $mantisIssue->getProject() . '] [MANTIS-' . $mantisIssue->getId() . ']',
+            description: $mantisIssue->getDescription() . PHP_EOL . PHP_EOL . $issueBadge,
         );
     }
 

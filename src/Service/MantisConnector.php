@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Artemeon\M2G\Service;
 
 use Artemeon\M2G\Config\ConfigValues;
-use Artemeon\M2G\Dto\MantisIssue;
+use Artemeon\M2G\Dto\MantisTicket;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -15,22 +15,22 @@ use RuntimeException;
 
 class MantisConnector
 {
-    private Client $client;
+    private readonly Client $client;
 
-    public function __construct(private ?ConfigValues $config)
+    public function __construct(private readonly ?ConfigValues $configValues)
     {
         $this->client = new Client([
             'headers' => [
-                'Authorization' => $this->config?->getMantisToken(),
+                'Authorization' => $this->configValues?->mantisToken,
                 'Content-Type' => 'application/json',
             ],
             'verify' => false,
-            'base_uri' => rtrim($this->config?->getMantisUrl() ?? '', '/') . '/api/rest/issues/',
+            'base_uri' => rtrim($this->configValues->mantisUrl ?? '', '/') . '/api/rest/issues/',
         ]);
     }
 
     /**
-     * @return MantisIssue[]
+     * @return MantisTicket[]
      */
     final public function fetchIssues(?int $filterId = null): array
     {
@@ -38,7 +38,7 @@ class MantisConnector
             $query = http_build_query(array_filter([
                 'filter_id' => $filterId,
                 'page_size' => 400,
-            ], static fn (mixed $value) => $value !== null));
+            ], static fn (mixed $value): bool => $value !== null));
 
             $response = $this->client->get($query !== '' && $query !== '0' ? '?' . $query : '');
             /**
@@ -84,7 +84,7 @@ class MantisConnector
         return $output;
     }
 
-    final public function readIssue(int $number): ?MantisIssue
+    final public function readIssue(int $number): ?MantisTicket
     {
         try {
             $response = $this->client->get((string) $number);
@@ -129,23 +129,23 @@ class MantisConnector
     /**
      * @throws JsonException
      */
-    final public function patchUpstreamField(MantisIssue $issue): bool
+    final public function patchUpstreamField(MantisTicket $mantisIssue): bool
     {
         $body = json_encode([
             'custom_fields' => [
                 [
                     'field' => [
-                        'id' => $issue->getUpstreamTicketFieldId(),
-                        'name' => $issue->getUpstreamTicketFieldName(),
+                        'id' => $mantisIssue->getUpstreamTicketFieldId(),
+                        'name' => $mantisIssue->getUpstreamTicketFieldName(),
                     ],
-                    'value' => $issue->getUpstreamTicket(),
+                    'value' => $mantisIssue->getUpstreamTicket(),
                 ],
             ],
         ], JSON_THROW_ON_ERROR);
 
         try {
             $this->client->patch(
-                (string) $issue->getId(),
+                (string) $mantisIssue->getId(),
                 [
                     'body' => $body,
                 ],
@@ -185,18 +185,18 @@ class MantisConnector
      *      }[],
      * } $data
      */
-    private function mapIssue(array $data, #[ExpectedValues(['name', 'label'])] string $status = 'name'): MantisIssue
+    private function mapIssue(array $data, #[ExpectedValues(['name', 'label'])] string $status = 'name'): MantisTicket
     {
-        if ($this->config === null) {
+        if (!$this->configValues instanceof ConfigValues) {
             throw new RuntimeException('Config is missing.');
         }
 
-        $mantisBaseUrl = $this->config->getMantisUrl();
+        $mantisBaseUrl = $this->configValues->mantisUrl;
         if (!str_ends_with($mantisBaseUrl, '/')) {
             $mantisBaseUrl .= '/';
         }
 
-        $issue = new MantisIssue(
+        $mantisIssue = new MantisTicket(
             id: $data['id'],
             summary: $data['summary'],
             description: $data['description'],
@@ -206,9 +206,9 @@ class MantisConnector
             assignee: $data['handler']['real_name'] ?? $data['handler']['name'] ?? null,
             issueUrl: $mantisBaseUrl . 'view.php?id=' . $data['id'],
         );
-        $this->updateUpstreamFieldsIssue($data, $issue);
+        $this->updateUpstreamFieldsIssue($data, $mantisIssue);
 
-        return $issue;
+        return $mantisIssue;
     }
 
     /**
@@ -222,7 +222,7 @@ class MantisConnector
      *     }[],
      * } $issue
      */
-    private function updateUpstreamFieldsIssue(array $issue, MantisIssue $mantisIssue): void
+    private function updateUpstreamFieldsIssue(array $issue, MantisTicket $mantisIssue): void
     {
         foreach ($issue['custom_fields'] as $field) {
             if ($field['field']['name'] === 'Upstream Ticket') {

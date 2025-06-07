@@ -22,7 +22,7 @@ class VersionHelper
         }
 
         $content = file_get_contents($path);
-        if (!$content) {
+        if ($content === '' || $content === false) {
             return null;
         }
 
@@ -46,13 +46,13 @@ class VersionHelper
      */
     public static function latestVersion(): ?string
     {
-        $packagist = new PackagistLatestVersion();
+        $packagistLatestVersion = new PackagistLatestVersion();
         $packageName = self::getPackageName();
-        if (!$packageName) {
+        if ($packageName === null || $packageName === '' || $packageName === '0') {
             return null;
         }
 
-        $latestRelease = $packagist->getLatestRelease($packageName);
+        $latestRelease = $packagistLatestVersion->getLatestRelease($packageName);
         if (!is_array($latestRelease) || !array_key_exists('version', $latestRelease)) {
             return null;
         }
@@ -73,11 +73,11 @@ class VersionHelper
         $currentVersion = self::fetchVersion();
         $latestVersion = self::latestVersion();
 
-        if (!$currentVersion || !$latestVersion) {
+        if ($currentVersion === '' || $currentVersion === '0' || ($latestVersion === null || $latestVersion === '' || $latestVersion === '0')) {
             return false;
         }
 
-        if (!preg_match("/^\d+\.\d+\.\d+$/", $currentVersion)) {
+        if (in_array(preg_match("/^\d+\.\d+\.\d+$/", $currentVersion), [0, false], true)) {
             return false;
         }
 

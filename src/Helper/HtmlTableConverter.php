@@ -13,15 +13,15 @@ class HtmlTableConverter implements ConverterInterface
      *     url: string,
      *     title: string,
      *     closed: bool,
-     * }> $githubResult
+     * }> $githubIssue
      */
-    public static function convert(IssuesListCommand $command, array $mantisIssues, array $githubResult): void
+    public static function convert(IssuesListCommand $issuesListCommand, array $tickets, array $githubIssue): void
     {
         $rows = [];
 
-        foreach ($mantisIssues as $issue) {
-            $githubIssues = array_map(static function (array $data) use ($githubResult) {
-                $githubIssue = $githubResult['issue' . $data['id']] ?? null;
+        foreach ($tickets as $ticket) {
+            $githubIssues = array_map(static function (array $data) use ($githubIssue): string {
+                $githubIssue = $githubIssue['issue' . $data['id']] ?? null;
                 if (!$githubIssue) {
                     return '';
                 }
@@ -34,17 +34,17 @@ class HtmlTableConverter implements ConverterInterface
 
                 return <<<HTML
 <tr>
-<td><a href="$url" target="_blank">$number</a></td>
-<td>$title</td>
-<td style="text-align: right;"><span class="label $error">$status</span></td>
+<td><a href="{$url}" target="_blank">{$number}</a></td>
+<td>{$title}</td>
+<td style="text-align: right;"><span class="label {$error}">{$status}</span></td>
 </tr>
 HTML;
-            }, UpstreamIssueParser::parse($issue->getUpstreamTicket()));
+            }, UpstreamIssueParser::parse($ticket->getUpstreamTicket()));
 
             $githubRows = implode(PHP_EOL, $githubIssues);
 
             $githubTable = '';
-            if (count($githubIssues)) {
+            if ($githubIssues !== []) {
                 $githubTable = <<<HTML
 <table style="width:100%;">
 <thead>
@@ -55,33 +55,33 @@ HTML;
 </tr>
 </thead>
 <tbody>
-$githubRows
+{$githubRows}
 </tbody>
 </table>
 HTML;
             }
 
-            $issueUrl = $issue->getIssueUrl();
-            $id = $issue->getId();
-            $project = $issue->getProject();
-            $summary = $issue->getSummary();
-            $assignee = $issue->getAssignee();
-            $status = $issue->getStatus();
+            $issueUrl = $ticket->getIssueUrl();
+            $id = $ticket->getId();
+            $project = $ticket->getProject();
+            $summary = $ticket->getSummary();
+            $assignee = $ticket->getAssignee();
+            $status = $ticket->getStatus();
             $rows[] = <<<HTML
 <tr>
-<td><a href="$issueUrl">$id</a></td>
-<td>$project</td>
-<td>$summary</td>
-<td>$assignee</td>
-<td>$status</td>
-<td>$githubTable</td>
+<td><a href="{$issueUrl}">{$id}</a></td>
+<td>{$project}</td>
+<td>{$summary}</td>
+<td>{$assignee}</td>
+<td>{$status}</td>
+<td>{$githubTable}</td>
 </tr>
 HTML;
         }
 
         $headers = ['ID', 'Project', 'Summary', 'Assignee', 'Status', 'Upstream'];
         $htmlRows = implode(' ', $rows);
-        $headersHTML = implode(PHP_EOL, array_map(static fn (string $header) => '<th>' . $header . '</th>', $headers));
+        $headersHTML = implode(PHP_EOL, array_map(static fn (string $header): string => '<th>' . $header . '</th>', $headers));
         $output = <<<HTML
 <!DOCTYPE html>
 <html lang="en">
@@ -94,11 +94,11 @@ HTML;
 <table>
 <thead>
 <tr>
-$headersHTML
+{$headersHTML}
 </tr>
 </thead>
 <tbody>
-$htmlRows
+{$htmlRows}
 </tbody>
 </table>
 </body>
@@ -112,6 +112,6 @@ HTML;
 
         file_put_contents($outputPath, $output);
 
-        $command->success('Table saved into ' . $outputPath);
+        $issuesListCommand->success('Table saved into ' . $outputPath);
     }
 }

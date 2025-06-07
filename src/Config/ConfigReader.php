@@ -18,7 +18,7 @@ class ConfigReader
         }
 
         $content = file_get_contents($configFile);
-        if (!$content) {
+        if ($content === '' || $content === false) {
             throw new RuntimeException('Invalid config file provided.');
         }
 

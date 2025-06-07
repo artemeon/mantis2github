@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Artemeon\M2G\Command;
 
+use Artemeon\M2G\Dto\MantisTicket;
 use Artemeon\M2G\Dto\GithubIssue;
 use Artemeon\M2G\Service\GithubConnector;
 use Artemeon\M2G\Service\MantisConnector;
@@ -16,7 +17,7 @@ class CreateGithubIssueFromMantisIssue extends Command
 
     protected ?string $description = 'Synchronize a list of Mantis issues to GitHub';
 
-    public function __construct(private MantisConnector $mantisConnector, private GithubConnector $githubConnector)
+    public function __construct(private readonly MantisConnector $mantisConnector, private readonly GithubConnector $githubConnector)
     {
         parent::__construct();
     }
@@ -44,12 +45,12 @@ class CreateGithubIssueFromMantisIssue extends Command
         $issues = [];
 
         $this->spin(function () use ($ids, &$issues): void {
-            $labels = array_map(static fn (array $label) => $label['name'], $this->githubConnector->getLabels());
+            $labels = array_map(static fn (array $label): string => $label['name'], $this->githubConnector->getLabels());
 
             foreach ($ids as $id) {
                 $mantisIssue = $this->mantisConnector->readIssue((int) $id);
 
-                if ($mantisIssue === null) {
+                if (!$mantisIssue instanceof MantisTicket) {
                     $issues[] = [
                         'id' => $id,
                         'icon' => '<error>✕</error>',
@@ -70,13 +71,13 @@ class CreateGithubIssueFromMantisIssue extends Command
                  * }[] $filteredLabels
                  */
                 $filteredLabels = array_values(
-                    array_filter($labels, static fn (string $label) => strtolower($label) === strtolower($mantisIssue->getProject())),
+                    array_filter($labels, static fn (string $label): bool => strtolower($label) === strtolower($mantisIssue->getProject())),
                 );
 
                 $newGithubIssue->setLabels($filteredLabels);
                 $newGithubIssue = $this->githubConnector->createIssue($newGithubIssue);
 
-                if ($newGithubIssue === null) {
+                if (!$newGithubIssue instanceof GithubIssue) {
                     $issues[] = [
                         'id' => $id,
                         'icon' => '<error>✕</error>',
@@ -119,6 +120,7 @@ class CreateGithubIssueFromMantisIssue extends Command
         foreach ($issues as $issue) {
             $table->addRow([$issue['icon'], $issue['id'], $issue['message'], $issue['issue']]);
         }
+
         $table->render();
 
         $this->newLine();

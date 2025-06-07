@@ -14,16 +14,17 @@ use Artemeon\M2G\Service\MantisConnector;
 class IssuesListCommand extends Command
 {
     protected string $signature = 'issues:list {--output= : Output Format}';
+
     protected ?string $description = 'Get a list of Mantis Tickets with their associated GitHub Issues.';
 
-    public function __construct(private MantisConnector $mantisConnector, private GithubConnector $githubConnector, private ?ConfigValues $config)
+    public function __construct(private readonly MantisConnector $mantisConnector, private readonly GithubConnector $githubConnector, private readonly ?ConfigValues $configValues)
     {
         parent::__construct();
     }
 
     public function __invoke(): int
     {
-        if ($this->config === null) {
+        if (!$this->configValues instanceof ConfigValues) {
             return self::INVALID;
         }
 
@@ -31,8 +32,8 @@ class IssuesListCommand extends Command
 
         /** @var array<string> $githubIssueIds */
         $githubIssueIds = [];
-        foreach ($mantisIssues as $issue) {
-            $parsedIssues = array_map(static fn (array $data) => $data['id'], UpstreamIssueParser::parse($issue->getUpstreamTicket()));
+        foreach ($mantisIssues as $mantiIssue) {
+            $parsedIssues = array_map(static fn (array $data): int => $data['id'], UpstreamIssueParser::parse($mantiIssue->getUpstreamTicket()));
             $githubIssueIds = [...$githubIssueIds, ...$parsedIssues];
         }
 
@@ -40,11 +41,12 @@ class IssuesListCommand extends Command
         /** @var string $id */
         foreach (array_unique($githubIssueIds) as $id) {
             $parts[] = <<<GRAPHQL
-issue$id: issue(number: $id) {
+issue{$id}: issue(number: {$id}) {
   ...IssueFragment
 }
 GRAPHQL;
         }
+
         $issuesQuery = implode(PHP_EOL, $parts);
 
         $issueFragment = <<<GRAPHQL
@@ -55,17 +57,17 @@ fragment IssueFragment on Issue {
 }
 GRAPHQL;
 
-        $repo = $this->config->getGithubRepo();
+        $repo = $this->configValues->githubRepo;
         [$owner, $name] = explode('/', $repo);
 
         $query = <<<GRAPHQL
 {
-  repository(name: "$name", owner: "$owner") {
-    $issuesQuery
+  repository(name: "{$name}", owner: "{$owner}") {
+    {$issuesQuery}
   }
 }
 
-$issueFragment
+{$issueFragment}
 GRAPHQL;
 
         /** @var array{ repository: array<string, array{ title: string, url: string, closed: bool }> } $result */
