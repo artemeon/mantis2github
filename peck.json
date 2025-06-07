@@ -1,0 +1,13 @@
+{
+    "preset": "base",
+    "ignore": {
+        "words": [
+            "php",
+            "dto",
+            "yaml",
+            "assignees",
+            "graphql"
+        ],
+        "paths": []
+    }
+}

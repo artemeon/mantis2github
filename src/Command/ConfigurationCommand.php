@@ -151,7 +151,7 @@ class ConfigurationCommand extends Command
             return;
         }
 
-        $configContent = preg_replace_callback('/{{([a-z0-9_]+)}}/i', fn ($matches) => $this->config[$matches[1]] ?? '', $stub);
+        $configContent = preg_replace_callback('/{{([a-z0-9_]+)}}/i', fn (array $matches): string => $this->config[$matches[1]] ?? '', $stub);
 
         file_put_contents($this->configPath, $configContent);
 

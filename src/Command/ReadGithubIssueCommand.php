@@ -65,7 +65,7 @@ HTML
 
         $assignees = array_map(
             static fn (
-                $assignee,
+                array $assignee,
             ): string => sprintf('<a href="%s" class="px-1 bg-blue-500 text-black">%s</a>', $assignee['html_url'], $assignee['login']),
             $githubIssue->getAssignees(),
         );
