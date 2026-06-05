@@ -3,7 +3,8 @@
     "description": "A small CLI tool to create a GitHub issue from a Mantis ticket.",
     "license": "MIT",
     "bin": [
-        "bin/mantis2github"
+        "bin/mantis2github",
+        "bin/mantis-mcp"
     ],
     "scripts": {
         "phpstan": "php ./vendor/bin/phpstan analyse --memory-limit=4G",
@@ -34,7 +35,9 @@
         "symfony/yaml": "^5.0|^6.0|^7.0",
         "nunomaduro/termwind": "^1.5|^2.0",
         "composer-runtime-api": "^2.2.2",
-        "ahinkle/packagist-latest-version": "^2.0"
+        "ahinkle/packagist-latest-version": "^2.0",
+        "mcp/sdk": "^0.6.0",
+        "helgesverre/toon": "^3.1"
     },
     "require-dev": {
         "jetbrains/phpstorm-attributes": "^1.0",

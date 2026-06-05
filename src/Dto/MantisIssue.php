@@ -6,19 +6,31 @@ namespace Artemeon\M2G\Dto;
 
 class MantisIssue
 {
+    /**
+     * @param MantisAttachment[] $attachments
+     */
     public function __construct(
-        private int $id,
-        private string $summary,
-        private string $description,
-        private string $project,
-        private string $status,
-        private string $resolution,
-        private ?string $assignee,
-        private ?string $issueUrl,
+        private readonly int $id,
+        private readonly string $summary,
+        private readonly string $description,
+        private readonly string $project,
+        private readonly string $status,
+        private readonly string $resolution,
+        private readonly ?string $assignee,
+        private readonly ?string $issueUrl,
         private ?string $upstreamTicket = null,
         private ?int $upstreamTicketFieldId = null,
         private ?string $upstreamTicketFieldName = null,
+        private readonly array $attachments = [],
     ) {
+    }
+
+    /**
+     * @return MantisAttachment[]
+     */
+    final public function getAttachments(): array
+    {
+        return $this->attachments;
     }
 
     final public function getId(): int

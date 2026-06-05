@@ -1,0 +1,335 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Artemeon\M2G\Service;
+
+use Artemeon\M2G\Dto\MantisAttachment;
+use Artemeon\M2G\Dto\MantisIssue;
+use Artemeon\M2G\Helper\IssueIdParser;
+use HelgeSverre\Toon\Toon;
+use InvalidArgumentException;
+use Mcp\Schema\Content\BlobResourceContents;
+use Mcp\Schema\Content\Content;
+use Mcp\Schema\Content\EmbeddedResource;
+use Mcp\Schema\Content\ImageContent;
+use Mcp\Schema\Content\TextContent;
+use Mcp\Schema\Content\TextResourceContents;
+use Mcp\Schema\Result\CallToolResult;
+use Mcp\Schema\Tool;
+use Mcp\Server;
+use Mcp\Server\ClientGateway;
+use Mcp\Server\Handler\ToolHandlerInterface;
+use Mcp\Server\Transport\StdioTransport;
+
+class McpServer
+{
+    private const ISSUE_DETAILS_TOOL = 'mantis-issue-details';
+
+    private const ISSUE_ATTACHMENTS_TOOL = 'mantis-issue-attachments';
+
+    private const ATTACHMENT_TOOL = 'mantis-attachment';
+
+    private const ATTACHMENT_SIZE_LIMIT = 10 * 1024 * 1024;
+
+    public function __construct(
+        private readonly MantisConnector $mantisConnector,
+        private readonly string $version,
+    ) {
+    }
+
+    final public function run(): void
+    {
+        $server = Server::builder()
+            ->setServerInfo('mantis-mcp', $this->version)
+            ->add(...$this->issueDetailsTool())
+            ->add(...$this->issueAttachmentsTool())
+            ->add(...$this->attachmentTool())
+            ->build();
+
+        $server->run(new StdioTransport());
+    }
+
+    /**
+     * @return array{Tool, ToolHandlerInterface}
+     */
+    private function issueDetailsTool(): array
+    {
+        $tool = new Tool(
+            name: self::ISSUE_DETAILS_TOOL,
+            title: 'Mantis Issue Details',
+            inputSchema: [
+                'type' => 'object',
+                'properties' => [
+                    'id' => [
+                        'type' => 'integer',
+                        'description' => 'The numeric Mantis issue ID.',
+                        'minimum' => 1,
+                    ],
+                    'url' => [
+                        'type' => 'string',
+                        'description' => 'A Mantis issue URL (e.g. https://mantis.example.com/view.php?id=12345). The numeric id is extracted from the ?id= query parameter.',
+                    ],
+                ],
+                'required' => [],
+            ],
+            description: 'Read details of a Mantis bug tracker ticket by ID or URL. Includes attachment metadata; use mantis-attachment to fetch a specific file.',
+            annotations: null,
+        );
+
+        $handler = new class ($this->mantisConnector) implements ToolHandlerInterface {
+            public function __construct(private readonly MantisConnector $mantisConnector)
+            {
+            }
+
+            public function execute(array $arguments, ClientGateway $gateway): CallToolResult
+            {
+                /** @var int|string|null $id */
+                $id = $arguments['id'] ?? null;
+                /** @var string|null $url */
+                $url = $arguments['url'] ?? null;
+
+                try {
+                    $issueId = IssueIdParser::parse($id, $url);
+                } catch (InvalidArgumentException $e) {
+                    return CallToolResult::error([new TextContent($e->getMessage())]);
+                }
+
+                $issue = $this->mantisConnector->readIssue($issueId);
+                if ($issue === null) {
+                    return CallToolResult::error([
+                        new TextContent(sprintf('Mantis issue %d not found or could not be fetched.', $issueId)),
+                    ]);
+                }
+
+                return CallToolResult::success([new TextContent(Toon::encode(self::toPayload($issue)))]);
+            }
+
+            /**
+             * @return array<string, mixed>
+             */
+            private static function toPayload(MantisIssue $issue): array
+            {
+                $payload = [
+                    'id' => $issue->getId(),
+                    'summary' => $issue->getSummary(),
+                    'description' => $issue->getDescription(),
+                    'project' => $issue->getProject(),
+                    'status' => $issue->getStatus(),
+                    'resolution' => $issue->getResolution(),
+                    'assignee' => $issue->getAssignee(),
+                    'url' => $issue->getIssueUrl(),
+                    'upstream_ticket' => $issue->getUpstreamTicket(),
+                ];
+
+                $filtered = array_filter(
+                    $payload,
+                    static fn (mixed $value): bool => $value !== null && $value !== '',
+                );
+
+                $attachments = array_map(
+                    static fn (MantisAttachment $a): array => array_filter([
+                        'id' => $a->getId(),
+                        'filename' => $a->getFilename(),
+                        'size' => $a->getSize(),
+                        'content_type' => $a->getContentType(),
+                    ], static fn (mixed $value): bool => $value !== null && $value !== ''),
+                    $issue->getAttachments(),
+                );
+
+                if ($attachments !== []) {
+                    $filtered['attachments'] = $attachments;
+                }
+
+                return $filtered;
+            }
+        };
+
+        return [$tool, $handler];
+    }
+
+    /**
+     * @return array{Tool, ToolHandlerInterface}
+     */
+    private function issueAttachmentsTool(): array
+    {
+        $tool = new Tool(
+            name: self::ISSUE_ATTACHMENTS_TOOL,
+            title: 'List Mantis Issue Attachments',
+            inputSchema: [
+                'type' => 'object',
+                'properties' => [
+                    'id' => [
+                        'type' => 'integer',
+                        'description' => 'The numeric Mantis issue ID.',
+                        'minimum' => 1,
+                    ],
+                    'url' => [
+                        'type' => 'string',
+                        'description' => 'A Mantis issue URL. The numeric id is extracted from the ?id= query parameter.',
+                    ],
+                ],
+                'required' => [],
+            ],
+            description: 'List attachment metadata (id, filename, size, content type) for a Mantis ticket. Use mantis-attachment to fetch the bytes of a specific file.',
+            annotations: null,
+        );
+
+        $handler = new class ($this->mantisConnector) implements ToolHandlerInterface {
+            public function __construct(private readonly MantisConnector $mantisConnector)
+            {
+            }
+
+            public function execute(array $arguments, ClientGateway $gateway): CallToolResult
+            {
+                /** @var int|string|null $id */
+                $id = $arguments['id'] ?? null;
+                /** @var string|null $url */
+                $url = $arguments['url'] ?? null;
+
+                try {
+                    $issueId = IssueIdParser::parse($id, $url);
+                } catch (InvalidArgumentException $e) {
+                    return CallToolResult::error([new TextContent($e->getMessage())]);
+                }
+
+                $attachments = $this->mantisConnector->listIssueFiles($issueId);
+                if ($attachments === null) {
+                    return CallToolResult::error([
+                        new TextContent(sprintf('Could not fetch attachments for Mantis issue %d.', $issueId)),
+                    ]);
+                }
+
+                $payload = [
+                    'issue_id' => $issueId,
+                    'attachments' => array_map(
+                        static fn (MantisAttachment $a): array => array_filter([
+                            'id' => $a->getId(),
+                            'filename' => $a->getFilename(),
+                            'size' => $a->getSize(),
+                            'content_type' => $a->getContentType(),
+                        ], static fn (mixed $value): bool => $value !== null && $value !== ''),
+                        $attachments,
+                    ),
+                ];
+
+                return CallToolResult::success([new TextContent(Toon::encode($payload))]);
+            }
+        };
+
+        return [$tool, $handler];
+    }
+
+    /**
+     * @return array{Tool, ToolHandlerInterface}
+     */
+    private function attachmentTool(): array
+    {
+        $tool = new Tool(
+            name: self::ATTACHMENT_TOOL,
+            title: 'Fetch Mantis Attachment',
+            inputSchema: [
+                'type' => 'object',
+                'properties' => [
+                    'issue_id' => [
+                        'type' => 'integer',
+                        'description' => 'The Mantis issue ID that owns the attachment.',
+                        'minimum' => 1,
+                    ],
+                    'file_id' => [
+                        'type' => 'integer',
+                        'description' => 'The attachment ID, as returned by mantis-issue-attachments or mantis-issue-details.',
+                        'minimum' => 1,
+                    ],
+                ],
+                'required' => ['issue_id', 'file_id'],
+            ],
+            description: sprintf(
+                'Download a Mantis ticket attachment. Images come back as inline image content; text files as text; everything else as an embedded resource. Files larger than %d MB are rejected.',
+                (int) (self::ATTACHMENT_SIZE_LIMIT / 1024 / 1024),
+            ),
+            annotations: null,
+        );
+
+        $sizeLimit = self::ATTACHMENT_SIZE_LIMIT;
+        $handler = new class ($this->mantisConnector, $sizeLimit) implements ToolHandlerInterface {
+            public function __construct(
+                private readonly MantisConnector $mantisConnector,
+                private readonly int $sizeLimit,
+            ) {
+            }
+
+            public function execute(array $arguments, ClientGateway $gateway): CallToolResult
+            {
+                $issueId = $this->positiveInt($arguments['issue_id'] ?? null);
+                $fileId = $this->positiveInt($arguments['file_id'] ?? null);
+
+                if ($issueId === null || $fileId === null) {
+                    return CallToolResult::error([
+                        new TextContent('Both "issue_id" and "file_id" must be provided as positive integers.'),
+                    ]);
+                }
+
+                $attachment = $this->mantisConnector->fetchIssueFile($issueId, $fileId);
+                if ($attachment === null) {
+                    return CallToolResult::error([
+                        new TextContent(sprintf('Attachment %d on Mantis issue %d not found or could not be fetched.', $fileId, $issueId)),
+                    ]);
+                }
+
+                if ($attachment->getSize() > $this->sizeLimit) {
+                    return CallToolResult::error([
+                        new TextContent(sprintf(
+                            'Attachment "%s" is %d bytes, which exceeds the %d MB limit.',
+                            $attachment->getFilename(),
+                            $attachment->getSize(),
+                            (int) ($this->sizeLimit / 1024 / 1024),
+                        )),
+                    ]);
+                }
+
+                $base64 = $attachment->getContentBase64();
+                if ($base64 === null) {
+                    return CallToolResult::error([
+                        new TextContent(sprintf('Attachment "%s" has no content available.', $attachment->getFilename())),
+                    ]);
+                }
+
+                return CallToolResult::success([self::toContent($attachment, $base64, $issueId)]);
+            }
+
+            private function positiveInt(mixed $value): ?int
+            {
+                if (is_int($value) && $value > 0) {
+                    return $value;
+                }
+                if (is_string($value) && ctype_digit($value) && (int) $value > 0) {
+                    return (int) $value;
+                }
+
+                return null;
+            }
+
+            private static function toContent(MantisAttachment $attachment, string $base64, int $issueId): Content
+            {
+                $mime = $attachment->getContentType() ?? 'application/octet-stream';
+                $uri = sprintf('mantis://issues/%d/files/%d', $issueId, $attachment->getId());
+
+                if (str_starts_with($mime, 'image/')) {
+                    return new ImageContent($base64, $mime);
+                }
+
+                if (str_starts_with($mime, 'text/') || $mime === 'application/json' || $mime === 'application/xml') {
+                    $decoded = base64_decode($base64, true);
+                    if ($decoded !== false) {
+                        return new EmbeddedResource(new TextResourceContents($uri, $mime, $decoded));
+                    }
+                }
+
+                return new EmbeddedResource(new BlobResourceContents($uri, $mime, $base64));
+            }
+        };
+
+        return [$tool, $handler];
+    }
+}

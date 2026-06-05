@@ -1,0 +1,51 @@
+#!/usr/bin/env php
+<?php
+
+use Artemeon\M2G\Config\ConfigReader;
+use Artemeon\M2G\Helper\VersionHelper;
+use Artemeon\M2G\Service\MantisConnector;
+use Artemeon\M2G\Service\McpServer;
+
+(new class() {
+    public function main(): void
+    {
+        $this->autoload();
+
+        $configValues = (new ConfigReader())->read();
+        if ($configValues === null) {
+            fwrite(\STDERR, "mantis-mcp: no Mantis credentials configured. Run `mantis2github configure` first." . \PHP_EOL);
+            exit(1);
+        }
+
+        $mantisConnector = new MantisConnector($configValues);
+        $server = new McpServer($mantisConnector, VersionHelper::fetchVersion());
+        $server->run();
+    }
+
+    private function autoload(): void
+    {
+        if (isset($GLOBALS['_composer_autoload_path'])) {
+            define('COMPOSER_INSTALL_PATH', $GLOBALS['_composer_autoload_path']);
+
+            unset($GLOBALS['_composer_autoload_path']);
+        } else {
+            foreach (
+                [
+                    __DIR__ . '/../../../autoload.php',
+                    __DIR__ . '/../../vendor/autoload.php',
+                    __DIR__ . '/../vendor/autoload.php',
+                ] as $file
+            ) {
+                if (file_exists($file)) {
+                    define('COMPOSER_INSTALL_PATH', $file);
+
+                    break;
+                }
+            }
+
+            unset($file);
+        }
+
+        require COMPOSER_INSTALL_PATH;
+    }
+})->main();

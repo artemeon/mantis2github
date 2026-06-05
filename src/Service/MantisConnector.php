@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Artemeon\M2G\Service;
 
 use Artemeon\M2G\Config\ConfigValues;
+use Artemeon\M2G\Dto\MantisAttachment;
 use Artemeon\M2G\Dto\MantisIssue;
 use Exception;
 use GuzzleHttp\Client;
@@ -15,9 +16,9 @@ use RuntimeException;
 
 class MantisConnector
 {
-    private Client $client;
+    private readonly Client $client;
 
-    public function __construct(private ?ConfigValues $config)
+    public function __construct(private readonly ?ConfigValues $config)
     {
         $this->client = new Client([
             'headers' => [
@@ -115,6 +116,12 @@ class MantisConnector
              *             },
              *             value: string
              *         }[],
+             *         attachments?: array{
+             *             id: int,
+             *             filename: string,
+             *             size: int,
+             *             content_type?: ?string,
+             *         }[],
              *     }[]
              * } $result
              */
@@ -124,6 +131,76 @@ class MantisConnector
         }
 
         return $this->mapIssue($result['issues'][0]);
+    }
+
+    /**
+     * @return MantisAttachment[]|null Null on fetch failure, empty array if the issue has no files.
+     */
+    final public function listIssueFiles(int $issueId): ?array
+    {
+        try {
+            $response = $this->client->get($issueId . '/files');
+            /**
+             * @var array{
+             *     files: array{
+             *         id: int,
+             *         filename: string,
+             *         size: int,
+             *         content_type?: ?string,
+             *     }[]
+             * } $result
+             */
+            $result = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (Exception | GuzzleException) {
+            return null;
+        }
+
+        $attachments = [];
+        foreach ($result['files'] as $file) {
+            $attachments[] = new MantisAttachment(
+                id: $file['id'],
+                filename: $file['filename'],
+                size: $file['size'],
+                contentType: $file['content_type'] ?? null,
+            );
+        }
+
+        return $attachments;
+    }
+
+    final public function fetchIssueFile(int $issueId, int $fileId): ?MantisAttachment
+    {
+        try {
+            $response = $this->client->get($issueId . '/files/' . $fileId);
+            /**
+             * @var array{
+             *     files: array{
+             *         id: int,
+             *         filename: string,
+             *         size: int,
+             *         content_type?: ?string,
+             *         content?: ?string,
+             *     }[]
+             * } $result
+             */
+            $result = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (Exception | GuzzleException) {
+            return null;
+        }
+
+        if ($result['files'] === []) {
+            return null;
+        }
+
+        $file = $result['files'][0];
+
+        return new MantisAttachment(
+            id: $file['id'],
+            filename: $file['filename'],
+            size: $file['size'],
+            contentType: $file['content_type'] ?? null,
+            contentBase64: $file['content'] ?? null,
+        );
     }
 
     /**
@@ -183,6 +260,12 @@ class MantisConnector
      *          },
      *          value: string
      *      }[],
+     *     attachments?: array{
+     *         id: int,
+     *         filename: string,
+     *         size: int,
+     *         content_type?: ?string,
+     *     }[],
      * } $data
      */
     private function mapIssue(array $data, #[ExpectedValues(['name', 'label'])] string $status = 'name'): MantisIssue
@@ -196,6 +279,16 @@ class MantisConnector
             $mantisBaseUrl .= '/';
         }
 
+        $attachments = [];
+        foreach ($data['attachments'] ?? [] as $attachment) {
+            $attachments[] = new MantisAttachment(
+                id: $attachment['id'],
+                filename: $attachment['filename'],
+                size: $attachment['size'],
+                contentType: $attachment['content_type'] ?? null,
+            );
+        }
+
         $issue = new MantisIssue(
             id: $data['id'],
             summary: $data['summary'],
@@ -205,6 +298,7 @@ class MantisConnector
             resolution: $data['resolution']['name'],
             assignee: $data['handler']['real_name'] ?? $data['handler']['name'] ?? null,
             issueUrl: $mantisBaseUrl . 'view.php?id=' . $data['id'],
+            attachments: $attachments,
         );
         $this->updateUpstreamFieldsIssue($data, $issue);
 

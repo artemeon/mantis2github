@@ -117,6 +117,39 @@ mantis2github issues:list [--output=html]
 |----------|-----------------|---------------|
 | `output` | `html`          | Output Format |
 
+## MCP Server
+
+This package ships an [MCP](https://modelcontextprotocol.io) server (`mantis-mcp`) that exposes
+Mantis ticket details to LLM-powered clients. It reuses the same `config.yaml` as the CLI, so
+running `mantis2github configure` once is enough to make both available.
+
+The server speaks the stdio transport and exposes three tools:
+
+| Tool                         | Description                                                                                       | Input                                                          |
+|------------------------------|---------------------------------------------------------------------------------------------------|----------------------------------------------------------------|
+| `mantis-issue-details`       | Read ticket details (incl. attachment metadata)                                                   | `{ "id": <int> }` or `{ "url": "<mantis-view-url>" }`          |
+| `mantis-issue-attachments`   | List attachment metadata (id, filename, size, content type) for a ticket                          | `{ "id": <int> }` or `{ "url": "<mantis-view-url>" }`          |
+| `mantis-attachment`          | Fetch the bytes of a single attachment. Images come back as inline image content, text as text, everything else as an embedded resource. Files over 10 MB are rejected. | `{ "issue_id": <int>, "file_id": <int> }`                      |
+
+Textual responses are encoded as [TOON](https://github.com/helgesverre/toon) to keep the LLM context compact.
+
+### Example host configuration
+
+For Claude Desktop (`claude_desktop_config.json`) or any other MCP host that supports stdio servers:
+
+```json
+{
+  "mcpServers": {
+    "mantis": {
+      "command": "mantis-mcp"
+    }
+  }
+}
+```
+
+If `mantis-mcp` is not on your `$PATH`, point `command` at the absolute path inside your Composer
+`vendor/bin/` (or `~/.composer/vendor/bin/` for a global install).
+
 ## License
 
 This project is open-sourced software licensed under the [MIT license](LICENSE).
