@@ -15,10 +15,12 @@ use Mcp\Schema\Content\EmbeddedResource;
 use Mcp\Schema\Content\ImageContent;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Content\TextResourceContents;
+use Mcp\Schema\ResourceDefinition;
 use Mcp\Schema\Result\CallToolResult;
 use Mcp\Schema\Tool;
 use Mcp\Server;
 use Mcp\Server\ClientGateway;
+use Mcp\Server\Handler\ResourceHandlerInterface;
 use Mcp\Server\Handler\ToolHandlerInterface;
 use Mcp\Server\Transport\StdioTransport;
 
@@ -30,10 +32,15 @@ class McpServer
 
     private const ATTACHMENT_TOOL = 'mantis-attachment';
 
+    private const MANTIS_URL_RESOURCE = 'mantis-url';
+
+    private const MANTIS_URL_RESOURCE_URI = 'mantis://config/url';
+
     private const ATTACHMENT_SIZE_LIMIT = 10 * 1024 * 1024;
 
     public function __construct(
         private readonly MantisConnector $mantisConnector,
+        private readonly string $mantisUrl,
         private readonly string $version,
     ) {
     }
@@ -45,6 +52,7 @@ class McpServer
             ->add(...$this->issueDetailsTool())
             ->add(...$this->issueAttachmentsTool())
             ->add(...$this->attachmentTool())
+            ->add(...$this->mantisUrlResource())
             ->build();
 
         $server->run(new StdioTransport());
@@ -331,5 +339,32 @@ class McpServer
         };
 
         return [$tool, $handler];
+    }
+
+    /**
+     * @return array{ResourceDefinition, ResourceHandlerInterface}
+     */
+    private function mantisUrlResource(): array
+    {
+        $resource = new ResourceDefinition(
+            uri: self::MANTIS_URL_RESOURCE_URI,
+            name: self::MANTIS_URL_RESOURCE,
+            title: 'Configured Mantis URL',
+            description: 'The base URL of the Mantis instance this server is configured against.',
+            mimeType: 'text/plain',
+        );
+
+        $handler = new class ($this->mantisUrl) implements ResourceHandlerInterface {
+            public function __construct(private readonly string $mantisUrl)
+            {
+            }
+
+            public function read(string $uri, ClientGateway $gateway): string
+            {
+                return $this->mantisUrl;
+            }
+        };
+
+        return [$resource, $handler];
     }
 }

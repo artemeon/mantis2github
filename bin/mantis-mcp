@@ -18,7 +18,7 @@ use Artemeon\M2G\Service\McpServer;
         }
 
         $mantisConnector = new MantisConnector($configValues);
-        $server = new McpServer($mantisConnector, VersionHelper::fetchVersion());
+        $server = new McpServer($mantisConnector, $configValues->getMantisUrl(), VersionHelper::fetchVersion());
         $server->run();
     }
 
