@@ -150,6 +150,12 @@ For Claude Desktop (`claude_desktop_config.json`) or any other MCP host that sup
 If `mantis-mcp` is not on your `$PATH`, point `command` at the absolute path inside your Composer
 `vendor/bin/` (or `~/.composer/vendor/bin/` for a global install).
 
+### Add to Claude Code via CLI
+
+```shell
+claude mcp add --transport stdio mantis --scope user -- mantis-mcp
+```
+
 ## License
 
 This project is open-sourced software licensed under the [MIT license](LICENSE).
