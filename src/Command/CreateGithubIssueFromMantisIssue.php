@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Artemeon\M2G\Command;
 
-use Artemeon\M2G\Dto\GithubIssue;
-use Artemeon\M2G\Service\GithubConnector;
-use Artemeon\M2G\Service\MantisConnector;
+use Artemeon\M2G\Dto\SyncResult;
+use Artemeon\M2G\Dto\SyncStatus;
+use Artemeon\M2G\Service\IssueSyncService;
 use JsonException;
 use Symfony\Component\Console\Helper\Table;
 
@@ -16,7 +16,7 @@ class CreateGithubIssueFromMantisIssue extends Command
 
     protected ?string $description = 'Synchronize a list of Mantis issues to GitHub';
 
-    public function __construct(private MantisConnector $mantisConnector, private GithubConnector $githubConnector)
+    public function __construct(private readonly IssueSyncService $issueSyncService)
     {
         parent::__construct();
     }
@@ -41,82 +41,24 @@ class CreateGithubIssueFromMantisIssue extends Command
 
         $this->newLine();
 
-        $issues = [];
+        /** @var SyncResult[] $results */
+        $results = [];
 
-        $this->spin(function () use ($ids, &$issues): void {
-            $labels = array_map(static fn (array $label) => $label['name'], $this->githubConnector->getLabels());
-
-            foreach ($ids as $id) {
-                $mantisIssue = $this->mantisConnector->readIssue((int) $id);
-
-                if ($mantisIssue === null) {
-                    $issues[] = [
-                        'id' => $id,
-                        'icon' => '<error>✕</error>',
-                        'message' => '<error>Mantis issue not found.</error>',
-                        'issue' => '',
-                    ];
-
-                    continue;
-                }
-
-                $newGithubIssue = GithubIssue::fromMantisIssue($mantisIssue);
-
-                /**
-                 * @var array{
-                 *     id: int,
-                 *     name: string,
-                 *     color: string,
-                 * }[] $filteredLabels
-                 */
-                $filteredLabels = array_values(
-                    array_filter($labels, static fn (string $label) => strtolower($label) === strtolower($mantisIssue->project)),
-                );
-
-                $newGithubIssue->labels = $filteredLabels;
-                $newGithubIssue = $this->githubConnector->createIssue($newGithubIssue);
-
-                if ($newGithubIssue === null) {
-                    $issues[] = [
-                        'id' => $id,
-                        'icon' => '<error>✕</error>',
-                        'message' => '<error>GitHub issue could not be created.</error>',
-                        'issue' => '',
-                    ];
-
-                    continue;
-                }
-
-                $mantisIssue->upstreamTicket = trim($mantisIssue->upstreamTicket . ' ' . $newGithubIssue->issueUrl);
-
-                $patched = $this->mantisConnector->patchUpstreamField($mantisIssue);
-
-                if ($patched === false) {
-                    $issues[] = [
-                        'id' => $id,
-                        'icon' => '<error>✕</error>',
-                        'message' => '<error>Upstream ticket URL could not be updated.</error>',
-                        'issue' => '',
-                    ];
-
-                    continue;
-                }
-
-                $issues[] = [
-                    'id' => $id,
-                    'icon' => '<info>✓</info>',
-                    'message' => '<info>Mantis issue has been synchronized.</info>',
-                    'issue' => $newGithubIssue->issueUrl,
-                ];
-            }
+        $this->spin(function () use ($ids, &$results): void {
+            $results = $this->issueSyncService->sync($ids, force: true);
         }, $message);
 
         $this->newLine();
 
         $table = new Table($this->output);
         $table->setHeaders(['', 'Mantis issue ID', 'Message', 'GitHub Issue']);
-        foreach ($issues as $issue) {
-            $table->addRow([$issue['icon'], $issue['id'], $issue['message'], $issue['issue']]);
+        foreach ($results as $result) {
+            $success = $result->status === SyncStatus::Synced;
+            $icon = $success ? '<info>✓</info>' : '<error>✕</error>';
+            $detail = $result->detail ?? $result->status->value;
+            $message = $success ? "<info>$detail</info>" : "<error>$detail</error>";
+
+            $table->addRow([$icon, $result->mantisId, $message, $result->githubUrl ?? '']);
         }
         $table->render();
 

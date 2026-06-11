@@ -7,9 +7,12 @@ namespace Artemeon\M2G\Service;
 use Artemeon\M2G\Dto\MantisAttachment;
 use Artemeon\M2G\Dto\MantisIssue;
 use Artemeon\M2G\Dto\MantisNote;
+use Artemeon\M2G\Dto\SyncResult;
+use Artemeon\M2G\Dto\SyncStatus;
 use Artemeon\M2G\Helper\IssueIdParser;
 use HelgeSverre\Toon\Toon;
 use InvalidArgumentException;
+use JsonException;
 use Mcp\Schema\Content\BlobResourceContents;
 use Mcp\Schema\Content\Content;
 use Mcp\Schema\Content\EmbeddedResource;
@@ -19,6 +22,7 @@ use Mcp\Schema\Content\TextResourceContents;
 use Mcp\Schema\ResourceDefinition;
 use Mcp\Schema\Result\CallToolResult;
 use Mcp\Schema\Tool;
+use Mcp\Schema\ToolAnnotations;
 use Mcp\Server;
 use Mcp\Server\ClientGateway;
 use Mcp\Server\Handler\ResourceHandlerInterface;
@@ -37,6 +41,8 @@ class McpServer
 
     private const ASSIGNED_FILTER = 'assigned';
 
+    private const SYNC_TOOL = 'mantis-sync-to-github';
+
     private const ATTACHMENT_TOOL = 'mantis-attachment';
 
     private const MANTIS_URL_RESOURCE = 'mantis-url';
@@ -47,6 +53,7 @@ class McpServer
 
     public function __construct(
         private readonly MantisConnector $mantisConnector,
+        private readonly IssueSyncService $issueSyncService,
         private readonly string $mantisUrl,
         private readonly string $version,
     ) {
@@ -60,6 +67,7 @@ class McpServer
             ->add(...$this->issueAttachmentsTool())
             ->add(...$this->issueNotesTool())
             ->add(...$this->myIssuesTool())
+            ->add(...$this->syncToGithubTool())
             ->add(...$this->attachmentTool())
             ->add(...$this->mantisUrlResource())
             ->build();
@@ -91,7 +99,12 @@ class McpServer
                 'required' => [],
             ],
             description: 'Read details of a Mantis bug tracker ticket by ID or URL. Includes attachment metadata; use mantis-attachment to fetch a specific file.',
-            annotations: null,
+            annotations: new ToolAnnotations(
+                readOnlyHint: true,
+                destructiveHint: false,
+                idempotentHint: true,
+                openWorldHint: true,
+            ),
         );
 
         $handler = new class ($this->mantisConnector) implements ToolHandlerInterface {
@@ -189,7 +202,12 @@ class McpServer
                 'required' => [],
             ],
             description: 'List attachment metadata (id, filename, size, content type) for a Mantis ticket. Use mantis-attachment to fetch the bytes of a specific file.',
-            annotations: null,
+            annotations: new ToolAnnotations(
+                readOnlyHint: true,
+                destructiveHint: false,
+                idempotentHint: true,
+                openWorldHint: true,
+            ),
         );
 
         $handler = new class ($this->mantisConnector) implements ToolHandlerInterface {
@@ -261,7 +279,12 @@ class McpServer
                 'required' => [],
             ],
             description: 'List the notes (comments) of a Mantis ticket by ID or URL. Each note includes its reporter, text, creation time, and view state (public or private).',
-            annotations: null,
+            annotations: new ToolAnnotations(
+                readOnlyHint: true,
+                destructiveHint: false,
+                idempotentHint: true,
+                openWorldHint: true,
+            ),
         );
 
         $handler = new class ($this->mantisConnector) implements ToolHandlerInterface {
@@ -318,13 +341,19 @@ class McpServer
         $tool = new Tool(
             name: self::MY_ISSUES_TOOL,
             title: 'List My Mantis Issues',
+            // @phpstan-ignore argument.type (empty "properties" must serialize to a JSON object {}, not [])
             inputSchema: [
                 'type' => 'object',
                 'properties' => (object) [],
                 'required' => [],
             ],
             description: 'List all Mantis tickets assigned to the current user (the owner of the configured API token). Returns a lean summary (id, summary, status, project, url) per ticket; use mantis-issue-details for the full ticket.',
-            annotations: null,
+            annotations: new ToolAnnotations(
+                readOnlyHint: true,
+                destructiveHint: false,
+                idempotentHint: true,
+                openWorldHint: true,
+            ),
         );
 
         $assignedFilter = self::ASSIGNED_FILTER;
@@ -363,6 +392,101 @@ class McpServer
     /**
      * @return array{Tool, ToolHandlerInterface}
      */
+    private function syncToGithubTool(): array
+    {
+        $tool = new Tool(
+            name: self::SYNC_TOOL,
+            title: 'Sync Mantis Issues to GitHub',
+            inputSchema: [
+                'type' => 'object',
+                'properties' => [
+                    'ids' => [
+                        'type' => 'array',
+                        'items' => [
+                            'type' => 'integer',
+                            'minimum' => 1,
+                        ],
+                        'minItems' => 1,
+                        'description' => 'One or more numeric Mantis issue IDs to synchronize to GitHub.',
+                    ],
+                    'force' => [
+                        'type' => 'boolean',
+                        'description' => 'Re-sync issues that already have an upstream GitHub ticket. When false (default), already-synced issues are skipped.',
+                        'default' => false,
+                    ],
+                ],
+                'required' => ['ids'],
+            ],
+            description: 'Synchronize one or more Mantis issues to GitHub: creates a GitHub issue for each and writes its URL back to the Mantis "Upstream Ticket" field. Already-synced issues are skipped unless "force" is true.',
+            annotations: new ToolAnnotations(
+                readOnlyHint: false,
+                destructiveHint: false,
+                idempotentHint: false,
+                openWorldHint: true,
+            ),
+        );
+
+        $handler = new class ($this->issueSyncService) implements ToolHandlerInterface {
+            public function __construct(private readonly IssueSyncService $issueSyncService)
+            {
+            }
+
+            public function execute(array $arguments, ClientGateway $gateway): CallToolResult
+            {
+                $rawIds = $arguments['ids'] ?? null;
+                if (!is_array($rawIds) || $rawIds === []) {
+                    return CallToolResult::error([
+                        new TextContent('"ids" must be a non-empty array of positive integer Mantis issue IDs.'),
+                    ]);
+                }
+
+                $ids = [];
+                foreach ($rawIds as $rawId) {
+                    if (is_int($rawId) && $rawId > 0) {
+                        $ids[] = $rawId;
+                    } elseif (is_string($rawId) && ctype_digit($rawId) && (int) $rawId > 0) {
+                        $ids[] = (int) $rawId;
+                    } else {
+                        return CallToolResult::error([
+                            new TextContent('"ids" must contain only positive integer Mantis issue IDs.'),
+                        ]);
+                    }
+                }
+
+                $force = ($arguments['force'] ?? false) === true;
+
+                try {
+                    $results = $this->issueSyncService->sync($ids, $force);
+                } catch (JsonException $e) {
+                    return CallToolResult::error([
+                        new TextContent('Sync failed while encoding a request: ' . $e->getMessage()),
+                    ]);
+                }
+
+                $payload = [
+                    'synced' => count(array_filter($results, static fn (SyncResult $r): bool => $r->status === SyncStatus::Synced)),
+                    'total' => count($results),
+                    'issues' => array_map(
+                        static fn (SyncResult $result): array => array_filter([
+                            'mantis_id' => $result->mantisId,
+                            'status' => $result->status->value,
+                            'github_url' => $result->githubUrl,
+                            'detail' => $result->detail,
+                        ], static fn (mixed $value): bool => $value !== null && $value !== ''),
+                        $results,
+                    ),
+                ];
+
+                return CallToolResult::success([new TextContent(Toon::encode($payload))]);
+            }
+        };
+
+        return [$tool, $handler];
+    }
+
+    /**
+     * @return array{Tool, ToolHandlerInterface}
+     */
     private function attachmentTool(): array
     {
         $tool = new Tool(
@@ -388,7 +512,12 @@ class McpServer
                 'Download a Mantis ticket attachment. Images come back as inline image content; text files as text; everything else as an embedded resource. Files larger than %d MB are rejected.',
                 (int) (self::ATTACHMENT_SIZE_LIMIT / 1024 / 1024),
             ),
-            annotations: null,
+            annotations: new ToolAnnotations(
+                readOnlyHint: true,
+                destructiveHint: false,
+                idempotentHint: true,
+                openWorldHint: true,
+            ),
         );
 
         $sizeLimit = self::ATTACHMENT_SIZE_LIMIT;

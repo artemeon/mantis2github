@@ -10,6 +10,7 @@ use Artemeon\M2G\Command\ReadMantisIssueCommand;
 use Artemeon\M2G\Config\ConfigReader;
 use Artemeon\M2G\Helper\VersionHelper;
 use Artemeon\M2G\Service\GithubConnector;
+use Artemeon\M2G\Service\IssueSyncService;
 use Artemeon\M2G\Service\MantisConnector;
 use Symfony\Component\Console\Application;
 
@@ -25,12 +26,13 @@ use Symfony\Component\Console\Application;
         $configValues = (new ConfigReader())->read();
         $githubConnector = new GithubConnector($configValues);
         $mantisConnector = new MantisConnector($configValues);
+        $issueSyncService = new IssueSyncService($mantisConnector, $githubConnector);
 
         $app = new Application($this->name, $this->version);
         $app->add(new ConfigurationCommand());
         $app->add(new ReadMantisIssueCommand($mantisConnector));
         $app->add(new ReadGithubIssueCommand($githubConnector));
-        $app->add(new CreateGithubIssueFromMantisIssue($mantisConnector, $githubConnector));
+        $app->add(new CreateGithubIssueFromMantisIssue($issueSyncService));
         $app->add(new IssuesListCommand($mantisConnector, $githubConnector, $configValues));
         $app->add(new CheckUpdateCommand());
         $app->run();

@@ -3,6 +3,8 @@
 
 use Artemeon\M2G\Config\ConfigReader;
 use Artemeon\M2G\Helper\VersionHelper;
+use Artemeon\M2G\Service\GithubConnector;
+use Artemeon\M2G\Service\IssueSyncService;
 use Artemeon\M2G\Service\MantisConnector;
 use Artemeon\M2G\Service\McpServer;
 
@@ -18,7 +20,14 @@ use Artemeon\M2G\Service\McpServer;
         }
 
         $mantisConnector = new MantisConnector($configValues);
-        $server = new McpServer($mantisConnector, $configValues->getMantisUrl(), VersionHelper::fetchVersion());
+        $githubConnector = new GithubConnector($configValues);
+        $issueSyncService = new IssueSyncService($mantisConnector, $githubConnector);
+        $server = new McpServer(
+            $mantisConnector,
+            $issueSyncService,
+            $configValues->getMantisUrl(),
+            VersionHelper::fetchVersion(),
+        );
         $server->run();
     }
 
