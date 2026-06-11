@@ -101,7 +101,9 @@ class ConfigurationCommand extends Command
         $parsedUrl = parse_url($mantisUrl);
         if ($parsedUrl) {
             $port = isset($parsedUrl['port']) ? ':' . $parsedUrl['port'] : '';
-            $mantisUrl = "{$parsedUrl['scheme']}://{$parsedUrl['host']}$port/";
+            $scheme = $parsedUrl['scheme'] ?? '';
+            $host = $parsedUrl['host'] ?? '';
+            $mantisUrl = "$scheme://$host$port/";
 
             $this->config['mantisUrl'] = $mantisUrl;
         }

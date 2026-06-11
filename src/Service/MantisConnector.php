@@ -34,7 +34,7 @@ class MantisConnector
     /**
      * @return MantisIssue[]
      */
-    final public function fetchIssues(?int $filterId = null): array
+    final public function fetchIssues(int | string | null $filterId = null): array
     {
         try {
             $query = http_build_query(array_filter([

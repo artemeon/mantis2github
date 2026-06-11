@@ -33,6 +33,10 @@ class McpServer
 
     private const ISSUE_NOTES_TOOL = 'mantis-issue-notes';
 
+    private const MY_ISSUES_TOOL = 'mantis-my-issues';
+
+    private const ASSIGNED_FILTER = 'assigned';
+
     private const ATTACHMENT_TOOL = 'mantis-attachment';
 
     private const MANTIS_URL_RESOURCE = 'mantis-url';
@@ -55,6 +59,7 @@ class McpServer
             ->add(...$this->issueDetailsTool())
             ->add(...$this->issueAttachmentsTool())
             ->add(...$this->issueNotesTool())
+            ->add(...$this->myIssuesTool())
             ->add(...$this->attachmentTool())
             ->add(...$this->mantisUrlResource())
             ->build();
@@ -295,6 +300,56 @@ class McpServer
                             'view_state' => $n->viewState,
                         ], static fn (mixed $value): bool => $value !== null && $value !== ''),
                         $issue->notes,
+                    ),
+                ];
+
+                return CallToolResult::success([new TextContent(Toon::encode($payload))]);
+            }
+        };
+
+        return [$tool, $handler];
+    }
+
+    /**
+     * @return array{Tool, ToolHandlerInterface}
+     */
+    private function myIssuesTool(): array
+    {
+        $tool = new Tool(
+            name: self::MY_ISSUES_TOOL,
+            title: 'List My Mantis Issues',
+            inputSchema: [
+                'type' => 'object',
+                'properties' => [],
+                'required' => [],
+            ],
+            description: 'List all Mantis tickets assigned to the current user (the owner of the configured API token). Returns a lean summary (id, summary, status, project, url) per ticket; use mantis-issue-details for the full ticket.',
+            annotations: null,
+        );
+
+        $assignedFilter = self::ASSIGNED_FILTER;
+        $handler = new class ($this->mantisConnector, $assignedFilter) implements ToolHandlerInterface {
+            public function __construct(
+                private readonly MantisConnector $mantisConnector,
+                private readonly string $assignedFilter,
+            ) {
+            }
+
+            public function execute(array $arguments, ClientGateway $gateway): CallToolResult
+            {
+                $issues = $this->mantisConnector->fetchIssues($this->assignedFilter);
+
+                $payload = [
+                    'issue_count' => count($issues),
+                    'issues' => array_map(
+                        static fn (MantisIssue $issue): array => array_filter([
+                            'id' => $issue->id,
+                            'summary' => $issue->summary,
+                            'status' => $issue->status,
+                            'project' => $issue->project,
+                            'url' => $issue->issueUrl,
+                        ], static fn (mixed $value): bool => $value !== null && $value !== ''),
+                        $issues,
                     ),
                 ];
 

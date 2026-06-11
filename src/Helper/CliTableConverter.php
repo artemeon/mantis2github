@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Artemeon\M2G\Helper;
 
 use Artemeon\M2G\Command\IssuesListCommand;
+use Artemeon\M2G\Dto\MantisIssue;
 
 class CliTableConverter implements ConverterInterface
 {
@@ -14,6 +15,7 @@ class CliTableConverter implements ConverterInterface
      *     title: string,
      *     closed: bool,
      * }> $githubResult
+     * @param array<MantisIssue> $mantisIssues
      */
     public static function convert(IssuesListCommand $command, array $mantisIssues, array $githubResult): void
     {
@@ -27,14 +29,14 @@ class CliTableConverter implements ConverterInterface
                 }
 
                 return '#' . $data['id'] . ' (' . $status . ')';
-            }, UpstreamIssueParser::parse($issue->getUpstreamTicket()));
+            }, UpstreamIssueParser::parse($issue->upstreamTicket));
 
             $rows[] = [
-                $issue->getId(),
-                $issue->getProject(),
-                $issue->getSummary(),
-                $issue->getAssignee(),
-                $issue->getStatus(),
+                $issue->id,
+                $issue->project,
+                $issue->summary,
+                $issue->assignee,
+                $issue->status,
                 implode(', ', $githubIssues),
             ];
         }

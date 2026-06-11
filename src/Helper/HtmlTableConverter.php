@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Artemeon\M2G\Helper;
 
 use Artemeon\M2G\Command\IssuesListCommand;
+use Artemeon\M2G\Dto\MantisIssue;
 
 class HtmlTableConverter implements ConverterInterface
 {
@@ -14,6 +15,7 @@ class HtmlTableConverter implements ConverterInterface
      *     title: string,
      *     closed: bool,
      * }> $githubResult
+     * @param array<MantisIssue> $mantisIssues
      */
     public static function convert(IssuesListCommand $command, array $mantisIssues, array $githubResult): void
     {
@@ -39,7 +41,7 @@ class HtmlTableConverter implements ConverterInterface
 <td style="text-align: right;"><span class="label $error">$status</span></td>
 </tr>
 HTML;
-            }, UpstreamIssueParser::parse($issue->getUpstreamTicket()));
+            }, UpstreamIssueParser::parse($issue->upstreamTicket));
 
             $githubRows = implode(PHP_EOL, $githubIssues);
 
@@ -61,12 +63,12 @@ $githubRows
 HTML;
             }
 
-            $issueUrl = $issue->getIssueUrl();
-            $id = $issue->getId();
-            $project = $issue->getProject();
-            $summary = $issue->getSummary();
-            $assignee = $issue->getAssignee();
-            $status = $issue->getStatus();
+            $issueUrl = $issue->issueUrl;
+            $id = $issue->id;
+            $project = $issue->project;
+            $summary = $issue->summary;
+            $assignee = $issue->assignee;
+            $status = $issue->status;
             $rows[] = <<<HTML
 <tr>
 <td><a href="$issueUrl">$id</a></td>
