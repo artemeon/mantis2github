@@ -320,7 +320,7 @@ class McpServer
             title: 'List My Mantis Issues',
             inputSchema: [
                 'type' => 'object',
-                'properties' => [],
+                'properties' => (object) [],
                 'required' => [],
             ],
             description: 'List all Mantis tickets assigned to the current user (the owner of the configured API token). Returns a lean summary (id, summary, status, project, url) per ticket; use mantis-issue-details for the full ticket.',
