@@ -14,6 +14,7 @@ readonly class IssueSyncService
     public function __construct(
         private MantisConnector $mantisConnector,
         private GithubConnector $githubConnector,
+        private string $mantisBaseUrl,
     ) {
     }
 
@@ -62,7 +63,7 @@ readonly class IssueSyncService
             );
         }
 
-        $newGithubIssue = GithubIssue::fromMantisIssue($mantisIssue);
+        $newGithubIssue = GithubIssue::fromMantisIssue($mantisIssue, $this->mantisBaseUrl);
 
         /**
          * @var array{

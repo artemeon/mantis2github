@@ -26,7 +26,7 @@ use Symfony\Component\Console\Application;
         $configValues = (new ConfigReader())->read();
         $githubConnector = new GithubConnector($configValues);
         $mantisConnector = new MantisConnector($configValues);
-        $issueSyncService = new IssueSyncService($mantisConnector, $githubConnector);
+        $issueSyncService = new IssueSyncService($mantisConnector, $githubConnector, $configValues?->getMantisUrl() ?? '');
 
         $app = new Application($this->name, $this->version);
         $app->add(new ConfigurationCommand());
