@@ -70,10 +70,10 @@ class CreateGithubIssueFromMantisIssue extends Command
                  * }[] $filteredLabels
                  */
                 $filteredLabels = array_values(
-                    array_filter($labels, static fn (string $label) => strtolower($label) === strtolower($mantisIssue->getProject())),
+                    array_filter($labels, static fn (string $label) => strtolower($label) === strtolower($mantisIssue->project)),
                 );
 
-                $newGithubIssue->setLabels($filteredLabels);
+                $newGithubIssue->labels = $filteredLabels;
                 $newGithubIssue = $this->githubConnector->createIssue($newGithubIssue);
 
                 if ($newGithubIssue === null) {
@@ -87,9 +87,8 @@ class CreateGithubIssueFromMantisIssue extends Command
                     continue;
                 }
 
-                $mantisIssue->setUpstreamTicket(
-                    trim($mantisIssue->getUpstreamTicket() . ' ' . $newGithubIssue->getIssueUrl()),
-                );
+                $mantisIssue->upstreamTicket = trim($mantisIssue->upstreamTicket . ' ' . $newGithubIssue->issueUrl);
+
                 $patched = $this->mantisConnector->patchUpstreamField($mantisIssue);
 
                 if ($patched === false) {
@@ -107,7 +106,7 @@ class CreateGithubIssueFromMantisIssue extends Command
                     'id' => $id,
                     'icon' => '<info>✓</info>',
                     'message' => '<info>Mantis issue has been synchronized.</info>',
-                    'issue' => $newGithubIssue->getIssueUrl(),
+                    'issue' => $newGithubIssue->issueUrl,
                 ];
             }
         }, $message);

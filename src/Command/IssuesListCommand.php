@@ -32,7 +32,7 @@ class IssuesListCommand extends Command
         /** @var array<string> $githubIssueIds */
         $githubIssueIds = [];
         foreach ($mantisIssues as $issue) {
-            $parsedIssues = array_map(static fn (array $data) => $data['id'], UpstreamIssueParser::parse($issue->getUpstreamTicket()));
+            $parsedIssues = array_map(static fn (array $data) => $data['id'], UpstreamIssueParser::parse($issue->upstreamTicket));
             $githubIssueIds = [...$githubIssueIds, ...$parsedIssues];
         }
 

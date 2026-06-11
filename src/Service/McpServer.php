@@ -6,6 +6,7 @@ namespace Artemeon\M2G\Service;
 
 use Artemeon\M2G\Dto\MantisAttachment;
 use Artemeon\M2G\Dto\MantisIssue;
+use Artemeon\M2G\Dto\MantisNote;
 use Artemeon\M2G\Helper\IssueIdParser;
 use HelgeSverre\Toon\Toon;
 use InvalidArgumentException;
@@ -30,6 +31,8 @@ class McpServer
 
     private const ISSUE_ATTACHMENTS_TOOL = 'mantis-issue-attachments';
 
+    private const ISSUE_NOTES_TOOL = 'mantis-issue-notes';
+
     private const ATTACHMENT_TOOL = 'mantis-attachment';
 
     private const MANTIS_URL_RESOURCE = 'mantis-url';
@@ -51,6 +54,7 @@ class McpServer
             ->setServerInfo('mantis-mcp', $this->version)
             ->add(...$this->issueDetailsTool())
             ->add(...$this->issueAttachmentsTool())
+            ->add(...$this->issueNotesTool())
             ->add(...$this->attachmentTool())
             ->add(...$this->mantisUrlResource())
             ->build();
@@ -119,15 +123,15 @@ class McpServer
             private static function toPayload(MantisIssue $issue): array
             {
                 $payload = [
-                    'id' => $issue->getId(),
-                    'summary' => $issue->getSummary(),
-                    'description' => $issue->getDescription(),
-                    'project' => $issue->getProject(),
-                    'status' => $issue->getStatus(),
-                    'resolution' => $issue->getResolution(),
-                    'assignee' => $issue->getAssignee(),
-                    'url' => $issue->getIssueUrl(),
-                    'upstream_ticket' => $issue->getUpstreamTicket(),
+                    'id' => $issue->id,
+                    'summary' => $issue->summary,
+                    'description' => $issue->description,
+                    'project' => $issue->project,
+                    'status' => $issue->status,
+                    'resolution' => $issue->resolution,
+                    'assignee' => $issue->assignee,
+                    'url' => $issue->issueUrl,
+                    'upstream_ticket' => $issue->upstreamTicket,
                 ];
 
                 $filtered = array_filter(
@@ -142,7 +146,7 @@ class McpServer
                         'size' => $a->getSize(),
                         'content_type' => $a->getContentType(),
                     ], static fn (mixed $value): bool => $value !== null && $value !== ''),
-                    $issue->getAttachments(),
+                    $issue->attachments,
                 );
 
                 if ($attachments !== []) {
@@ -218,6 +222,79 @@ class McpServer
                             'content_type' => $a->getContentType(),
                         ], static fn (mixed $value): bool => $value !== null && $value !== ''),
                         $attachments,
+                    ),
+                ];
+
+                return CallToolResult::success([new TextContent(Toon::encode($payload))]);
+            }
+        };
+
+        return [$tool, $handler];
+    }
+
+    /**
+     * @return array{Tool, ToolHandlerInterface}
+     */
+    private function issueNotesTool(): array
+    {
+        $tool = new Tool(
+            name: self::ISSUE_NOTES_TOOL,
+            title: 'List Mantis Issue Notes',
+            inputSchema: [
+                'type' => 'object',
+                'properties' => [
+                    'id' => [
+                        'type' => 'integer',
+                        'description' => 'The numeric Mantis issue ID.',
+                        'minimum' => 1,
+                    ],
+                    'url' => [
+                        'type' => 'string',
+                        'description' => 'A Mantis issue URL. The numeric id is extracted from the ?id= query parameter.',
+                    ],
+                ],
+                'required' => [],
+            ],
+            description: 'List the notes (comments) of a Mantis ticket by ID or URL. Each note includes its reporter, text, creation time, and view state (public or private).',
+            annotations: null,
+        );
+
+        $handler = new class ($this->mantisConnector) implements ToolHandlerInterface {
+            public function __construct(private readonly MantisConnector $mantisConnector)
+            {
+            }
+
+            public function execute(array $arguments, ClientGateway $gateway): CallToolResult
+            {
+                /** @var int|string|null $id */
+                $id = $arguments['id'] ?? null;
+                /** @var string|null $url */
+                $url = $arguments['url'] ?? null;
+
+                try {
+                    $issueId = IssueIdParser::parse($id, $url);
+                } catch (InvalidArgumentException $e) {
+                    return CallToolResult::error([new TextContent($e->getMessage())]);
+                }
+
+                $issue = $this->mantisConnector->readIssue($issueId);
+                if ($issue === null) {
+                    return CallToolResult::error([
+                        new TextContent(sprintf('Mantis issue %d not found or could not be fetched.', $issueId)),
+                    ]);
+                }
+
+                $payload = [
+                    'issue_id' => $issueId,
+                    'notes' => array_map(
+                        static fn (MantisNote $n): array => array_filter([
+                            'id' => $n->id,
+                            'reporter' => $n->reporter,
+                            'text' => $n->text,
+                            'created_at' => $n->createdAt,
+                            'view_state' => $n->viewState,
+                        ], static fn (mixed $value): bool => $value !== null && $value !== ''),
+                        $issue->notes,
                     ),
                 ];
 

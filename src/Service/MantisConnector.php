@@ -7,6 +7,7 @@ namespace Artemeon\M2G\Service;
 use Artemeon\M2G\Config\ConfigValues;
 use Artemeon\M2G\Dto\MantisAttachment;
 use Artemeon\M2G\Dto\MantisIssue;
+use Artemeon\M2G\Dto\MantisNote;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -122,6 +123,18 @@ class MantisConnector
              *             size: int,
              *             content_type?: ?string,
              *         }[],
+             *         notes?: array{
+             *             id: int,
+             *             reporter: array{
+             *                 real_name: ?string,
+             *                 name: ?string,
+             *             },
+             *             text: string,
+             *             created_at?: ?string,
+             *             view_state?: array{
+             *                 name?: ?string,
+             *             },
+             *         }[],
              *     }[]
              * } $result
              */
@@ -212,17 +225,17 @@ class MantisConnector
             'custom_fields' => [
                 [
                     'field' => [
-                        'id' => $issue->getUpstreamTicketFieldId(),
-                        'name' => $issue->getUpstreamTicketFieldName(),
+                        'id' => $issue->upstreamTicketFieldId,
+                        'name' => $issue->upstreamTicketFieldName,
                     ],
-                    'value' => $issue->getUpstreamTicket(),
+                    'value' => $issue->upstreamTicket,
                 ],
             ],
         ], JSON_THROW_ON_ERROR);
 
         try {
             $this->client->patch(
-                (string) $issue->getId(),
+                (string) $issue->id,
                 [
                     'body' => $body,
                 ],
@@ -266,6 +279,18 @@ class MantisConnector
      *         size: int,
      *         content_type?: ?string,
      *     }[],
+     *     notes?: array{
+     *         id: int,
+     *         reporter: array{
+     *             real_name: ?string,
+     *             name: ?string,
+     *         },
+     *         text: string,
+     *         created_at?: ?string,
+     *         view_state?: array{
+     *             name?: ?string,
+     *         },
+     *     }[],
      * } $data
      */
     private function mapIssue(array $data, #[ExpectedValues(['name', 'label'])] string $status = 'name'): MantisIssue
@@ -289,6 +314,17 @@ class MantisConnector
             );
         }
 
+        $notes = [];
+        foreach ($data['notes'] ?? [] as $note) {
+            $notes[] = new MantisNote(
+                id: $note['id'],
+                reporter: $note['reporter']['real_name'] ?? $note['reporter']['name'] ?? null,
+                text: $note['text'],
+                createdAt: $note['created_at'] ?? null,
+                viewState: $note['view_state']['name'] ?? null,
+            );
+        }
+
         $issue = new MantisIssue(
             id: $data['id'],
             summary: $data['summary'],
@@ -299,6 +335,7 @@ class MantisConnector
             assignee: $data['handler']['real_name'] ?? $data['handler']['name'] ?? null,
             issueUrl: $mantisBaseUrl . 'view.php?id=' . $data['id'],
             attachments: $attachments,
+            notes: $notes,
         );
         $this->updateUpstreamFieldsIssue($data, $issue);
 
@@ -320,9 +357,9 @@ class MantisConnector
     {
         foreach ($issue['custom_fields'] as $field) {
             if ($field['field']['name'] === 'Upstream Ticket') {
-                $mantisIssue->setUpstreamTicketFieldName($field['field']['name']);
-                $mantisIssue->setUpstreamTicketFieldId($field['field']['id']);
-                $mantisIssue->setUpstreamTicket($field['value']);
+                $mantisIssue->upstreamTicketFieldName = $field['field']['name'];
+                $mantisIssue->upstreamTicketFieldId = $field['field']['id'];
+                $mantisIssue->upstreamTicket = $field['value'];
             }
         }
     }

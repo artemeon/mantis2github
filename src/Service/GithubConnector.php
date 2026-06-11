@@ -80,9 +80,9 @@ class GithubConnector
                 'issues',
                 [
                     'body' => json_encode([
-                        'title' => $issue->getTitle(),
-                        'body' => $issue->getDescription(),
-                        'labels' => $issue->getLabels(),
+                        'title' => $issue->title,
+                        'body' => $issue->description,
+                        'labels' => $issue->labels,
                     ], JSON_THROW_ON_ERROR),
                 ],
             );

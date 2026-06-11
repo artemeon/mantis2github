@@ -29,11 +29,11 @@ class ReadMantisIssueCommand extends Command
 
         terminal()->clear();
 
-        if (in_array($issue->getResolution(), ['open', 'reopened'])) {
+        if (in_array($issue->resolution, ['open', 'reopened'])) {
             render(
                 <<<HTML
 <div class="my-1 mx-2 px-1 bg-green-500 text-white font-bold">
-    Issue is {$issue->getResolution()}
+    Issue is {$issue->resolution}
 </div>
 HTML
             );
@@ -41,7 +41,7 @@ HTML
             render(
                 <<<HTML
 <div class="my-1 mx-2 px-1 bg-purple-500 text-white font-bold">
-    Issue is {$issue->getResolution()}
+    Issue is {$issue->resolution}
 </div>
 HTML
             );
@@ -50,19 +50,19 @@ HTML
         render(
             <<<HTML
 <div class="mx-2 mb-1 font-bold">
-    [{$issue->getProject()}] {$issue->getSummary()}
+    [{$issue->project}] {$issue->summary}
 </div>
 HTML
         );
         render(
             <<<HTML
 <div class="mx-2 mb-1">
-    {$issue->getIssueUrl()}
+    {$issue->issueUrl}
 </div>
 HTML
         );
 
-        if ($issue->getUpstreamTicket()) {
+        if ($issue->upstreamTicket) {
             render(
                 <<<HTML
 <div class="mx-2 mb-1 font-bold">
@@ -73,13 +73,13 @@ HTML
             render(
                 <<<HTML
 <div class="mx-2 mb-1">
-    {$issue->getUpstreamTicket()}
+    {$issue->upstreamTicket}
 </div>
 HTML
             );
         }
 
-        if ($issue->getAssignee()) {
+        if ($issue->assignee) {
             render(
                 <<<HTML
 <div class="mx-2 mb-1 font-bold">
@@ -90,7 +90,7 @@ HTML
             render(
                 <<<HTML
 <div class="mx-2 mb-1">
-    {$issue->getAssignee()}
+    {$issue->assignee}
 </div>
 HTML
             );

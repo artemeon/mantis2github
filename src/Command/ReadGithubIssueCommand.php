@@ -29,7 +29,7 @@ class ReadGithubIssueCommand extends Command
 
         terminal()->clear();
 
-        if ($issue->getState() === 'open') {
+        if ($issue->state === 'open') {
             render(
                 <<<HTML
 <div class="my-1 mx-2 px-1 bg-green-500 text-white font-bold">
@@ -37,7 +37,7 @@ class ReadGithubIssueCommand extends Command
 </div>
 HTML
             );
-        } elseif ($issue->getState() === 'closed') {
+        } elseif ($issue->state === 'closed') {
             render(
                 <<<HTML
 <div class="my-1 mx-2 px-1 bg-purple-500 text-white font-bold">
@@ -50,14 +50,14 @@ HTML
         render(
             <<<HTML
 <div class="mx-2 mb-1 font-bold">
-    {$issue->getTitle()}
+    {$issue->title}
 </div>
 HTML
         );
         render(
             <<<HTML
 <div class="mx-2 mb-1">
-    {$issue->getIssueUrl()}
+    {$issue->issueUrl}
 </div>
 HTML
         );
@@ -66,7 +66,7 @@ HTML
             static fn (
                 $assignee,
             ) => "<a href=\"{$assignee['html_url']}\" class=\"px-1 bg-blue-500 text-black\">{$assignee['login']}</a>",
-            $issue->getAssignees(),
+            $issue->assignees,
         );
 
         if (count($assignees)) {
@@ -88,7 +88,7 @@ HTML
             );
         }
 
-        $labels = $issue->getLabels();
+        $labels = $issue->labels;
 
         if (count($labels)) {
             $labels = array_map(static function ($label) {
