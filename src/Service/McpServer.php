@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Artemeon\M2G\Service;
 
+use Artemeon\M2G\Service\Mcp\AssignIssueToMeTool;
 use Artemeon\M2G\Service\Mcp\AttachmentTool;
 use Artemeon\M2G\Service\Mcp\CurrentUserResource;
 use Artemeon\M2G\Service\Mcp\IssueAttachmentsTool;
@@ -57,6 +58,7 @@ class McpServer
             new UnassignedIssuesTool($this->mantisConnector),
             new SyncToGithubTool($this->issueSyncService),
             new AttachmentTool($this->mantisConnector),
+            new AssignIssueToMeTool($this->mantisConnector),
         ];
     }
 

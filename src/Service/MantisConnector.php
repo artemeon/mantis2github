@@ -279,6 +279,31 @@ class MantisConnector
     }
 
     /**
+     * @throws JsonException
+     */
+    final public function assignIssue(int $issueId, int $handlerId): bool
+    {
+        $body = json_encode([
+            'handler' => [
+                'id' => $handlerId,
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        try {
+            $this->client->patch(
+                'issues/' . $issueId,
+                [
+                    'body' => $body,
+                ],
+            );
+
+            return true;
+        } catch (Exception | GuzzleException) {
+            return false;
+        }
+    }
+
+    /**
      * @param array{
      *     id: int,
      *     summary: string,
