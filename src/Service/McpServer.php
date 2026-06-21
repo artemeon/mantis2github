@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Artemeon\M2G\Service;
 
 use Artemeon\M2G\Service\Mcp\AttachmentTool;
+use Artemeon\M2G\Service\Mcp\CurrentUserResource;
 use Artemeon\M2G\Service\Mcp\IssueAttachmentsTool;
 use Artemeon\M2G\Service\Mcp\IssueDetailsTool;
 use Artemeon\M2G\Service\Mcp\IssueNotesTool;
@@ -66,6 +67,7 @@ class McpServer
     {
         return [
             new MantisUrlResource($this->mantisUrl),
+            new CurrentUserResource($this->mantisConnector),
         ];
     }
 }

@@ -8,6 +8,7 @@ use Artemeon\M2G\Config\ConfigValues;
 use Artemeon\M2G\Dto\MantisAttachment;
 use Artemeon\M2G\Dto\MantisIssue;
 use Artemeon\M2G\Dto\MantisNote;
+use Artemeon\M2G\Dto\MantisUser;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -27,7 +28,7 @@ class MantisConnector
                 'Content-Type' => 'application/json',
             ],
             'verify' => false,
-            'base_uri' => rtrim($this->config?->getMantisUrl() ?? '', '/') . '/api/rest/issues/',
+            'base_uri' => rtrim($this->config?->getMantisUrl() ?? '', '/') . '/api/rest/',
         ]);
     }
 
@@ -42,7 +43,7 @@ class MantisConnector
                 'page_size' => 400,
             ], static fn (mixed $value) => $value !== null));
 
-            $response = $this->client->get($query !== '' && $query !== '0' ? '?' . $query : '');
+            $response = $this->client->get($query !== '' && $query !== '0' ? 'issues?' . $query : 'issues');
             /**
              * @var array{
              *     issues: array{
@@ -86,10 +87,40 @@ class MantisConnector
         return $output;
     }
 
+    final public function fetchCurrentUser(): ?MantisUser
+    {
+        try {
+            $response = $this->client->get('users/me');
+            /**
+             * @var array{
+             *     id: int,
+             *     name: string,
+             *     real_name?: ?string,
+             *     email?: ?string,
+             *     access_level?: array{
+             *         name?: ?string,
+             *         label?: ?string,
+             *     },
+             * } $result
+             */
+            $result = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        } catch (Exception | GuzzleException) {
+            return null;
+        }
+
+        return new MantisUser(
+            id: $result['id'],
+            name: $result['name'],
+            realName: $result['real_name'] ?? null,
+            email: $result['email'] ?? null,
+            accessLevel: $result['access_level']['label'] ?? $result['access_level']['name'] ?? null,
+        );
+    }
+
     final public function readIssue(int $number): ?MantisIssue
     {
         try {
-            $response = $this->client->get((string) $number);
+            $response = $this->client->get('issues/' . $number);
             /**
              * @var array{
              *     issues: array{
@@ -152,7 +183,7 @@ class MantisConnector
     final public function listIssueFiles(int $issueId): ?array
     {
         try {
-            $response = $this->client->get($issueId . '/files');
+            $response = $this->client->get('issues/' . $issueId . '/files');
             /**
              * @var array{
              *     files: array{
@@ -184,7 +215,7 @@ class MantisConnector
     final public function fetchIssueFile(int $issueId, int $fileId): ?MantisAttachment
     {
         try {
-            $response = $this->client->get($issueId . '/files/' . $fileId);
+            $response = $this->client->get('issues/' . $issueId . '/files/' . $fileId);
             /**
              * @var array{
              *     files: array{
@@ -235,7 +266,7 @@ class MantisConnector
 
         try {
             $this->client->patch(
-                (string) $issue->id,
+                'issues/' . $issue->id,
                 [
                     'body' => $body,
                 ],
