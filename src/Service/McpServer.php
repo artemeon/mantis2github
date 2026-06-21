@@ -13,6 +13,7 @@ use Artemeon\M2G\Service\Mcp\McpResource;
 use Artemeon\M2G\Service\Mcp\McpTool;
 use Artemeon\M2G\Service\Mcp\MyIssuesTool;
 use Artemeon\M2G\Service\Mcp\SyncToGithubTool;
+use Artemeon\M2G\Service\Mcp\UnassignedIssuesTool;
 use Mcp\Server;
 use Mcp\Server\Transport\StdioTransport;
 
@@ -52,6 +53,7 @@ class McpServer
             new IssueAttachmentsTool($this->mantisConnector),
             new IssueNotesTool($this->mantisConnector),
             new MyIssuesTool($this->mantisConnector),
+            new UnassignedIssuesTool($this->mantisConnector),
             new SyncToGithubTool($this->issueSyncService),
             new AttachmentTool($this->mantisConnector),
         ];
